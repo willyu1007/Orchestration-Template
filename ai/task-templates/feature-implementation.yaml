@@ -1,0 +1,143 @@
+# AI Task Template: Feature Implementation
+# 用于指导AI完成新功能实现的标准流程
+
+template_id: "feature_implementation"
+version: "1.0"
+description: "Standard workflow for implementing new features"
+estimated_tokens: 3000
+
+# 执行步骤
+steps:
+  - id: "retrieve"
+    name: "Retrieve Context"
+    actions:
+      - load_module_contract
+      - check_existing_patterns
+      - review_dependencies
+    max_tokens: 500
+    required_files:
+      - "{module}/agent.md"
+      - "{module}/doc/CONTRACT.md"
+    
+  - id: "plan"
+    name: "Plan Implementation"
+    actions:
+      - analyze_requirements
+      - design_interface
+      - identify_test_cases
+    max_tokens: 400
+    outputs:
+      - implementation_plan.md
+      - test_scenarios.yaml
+    
+  - id: "code"
+    name: "Generate Code"
+    actions:
+      - implement_core_logic
+      - add_type_hints
+      - include_docstrings
+    max_tokens: 1500
+    quality_checks:
+      - type_safety: true
+      - test_coverage: ">= 80%"
+      - docstring_coverage: "100%"
+    
+  - id: "test"
+    name: "Create Tests"
+    actions:
+      - write_unit_tests
+      - write_integration_tests
+      - generate_test_data
+    max_tokens: 500
+    test_requirements:
+      - happy_path: required
+      - edge_cases: required
+      - error_handling: required
+    
+  - id: "document"
+    name: "Update Documentation"
+    actions:
+      - update_contract
+      - add_examples
+      - update_changelog
+    max_tokens: 100
+    files_to_update:
+      - "doc/CONTRACT.md"
+      - "doc/CHANGELOG.md"
+      - "examples/README.md"
+
+# Context优化策略
+context_strategy:
+  cache_duration: 3600  # 1 hour
+  priority_loading:
+    high:
+      - agent.md
+      - CONTRACT.md
+    medium:
+      - related_modules
+      - test_files
+    low:
+      - examples
+      - historical_changes
+  
+  token_allocation:
+    core_context: 40%      # 核心上下文
+    implementation: 35%    # 实现细节
+    testing: 20%          # 测试相关
+    documentation: 5%     # 文档更新
+
+# 成功标准
+success_criteria:
+  - all_tests_pass: true
+  - no_linting_errors: true
+  - contract_updated: true
+  - examples_provided: true
+  - token_budget_met: true
+
+# AI指导原则
+ai_guidelines:
+  - "Follow existing code patterns in the module"
+  - "Maintain backward compatibility"
+  - "Prioritize readability over cleverness"
+  - "Include comprehensive error handling"
+  - "Document all public interfaces"
+
+# 错误恢复策略
+error_recovery:
+  test_failure:
+    - analyze_error_message
+    - check_implementation
+    - fix_and_retry
+  
+  token_overflow:
+    - reduce_context_scope
+    - split_into_subtasks
+    - use_cached_results
+  
+  contract_violation:
+    - review_contract_requirements
+    - adjust_implementation
+    - update_contract_if_needed
+
+# 示例用法
+example_usage: |
+  # AI执行此模板
+  1. Load template: feature_implementation
+  2. Set parameters:
+     - module: "user_service"
+     - feature: "add_two_factor_auth"
+  3. Execute steps sequentially
+  4. Validate success criteria
+  5. Generate completion report
+
+# 性能指标
+performance_metrics:
+  expected_completion_time: "5-10 minutes"
+  average_token_usage: 2800
+  success_rate_target: ">= 90%"
+  
+# 相关模板
+related_templates:
+  - bug_fix.yaml
+  - api_endpoint.yaml
+  - database_migration.yaml

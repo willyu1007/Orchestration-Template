@@ -1,0 +1,39 @@
+pattern_id: "security-audit"
+version: "1.1"
+name: "Security Audit Workflow"
+description: "Review auth, secrets, and dependencies"
+complexity: "medium"
+estimated_time: "2-3 hours"
+category: "maintenance"
+ai_optimized: true
+prerequisites:
+  - "Access to logs, config, and dependency lists"
+workflow:
+  - step: 1
+    name: "Scope"
+    description: "List assets, language requirements, and guardrails"
+    documents_to_load:
+      - /doc_human/policies/security_details.md
+  - step: 2
+    name: "Review"
+    description: "Scan configs, secrets, dependencies"
+    documents_to_load:
+      - /config/README.md
+      - /scripts/secret_scan.py
+  - step: 3
+    name: "Report"
+    description: "Document findings + mitigation plan"
+    documents_to_load:
+      - /doc_human/templates/workdoc-context.md
+  - step: 4
+    name: "Follow-up"
+    description: "Create tasks for fixes"
+    documents_to_load:
+      - /doc_human/project/FINAL_IMPROVEMENTS.md
+quality_checklist:
+  - "[ ] Findings logged"
+  - "[ ] Language consistent"
+  - "[ ] Guardrails adjusted if needed"
+references:
+  - /doc_agent/quickstart/guardrail-quickstart.md
+  - /doc_human/policies/security_details.md

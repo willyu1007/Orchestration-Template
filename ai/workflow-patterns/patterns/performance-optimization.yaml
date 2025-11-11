@@ -1,0 +1,40 @@
+pattern_id: "performance-optimization"
+version: "1.1"
+name: "Performance Optimization Workflow"
+description: "Profile, optimize, and verify performance improvements"
+complexity: "medium"
+estimated_time: "2-4 hours"
+category: "optimization"
+ai_optimized: true
+prerequisites:
+  - "Baseline metrics captured"
+workflow:
+  - step: 1
+    name: "Profile"
+    description: "Use tracing/logging tools"
+    documents_to_load:
+      - /doc_human/guides/HEALTH_MONITORING_GUIDE.md
+  - step: 2
+    name: "Optimize"
+    description: "Apply code/db changes"
+    documents_to_load:
+      - /doc_agent/coding/AI_CODING_GUIDE.md
+  - step: 3
+    name: "Validate"
+    description: "Benchmark + guardrails"
+    documents_to_load:
+      - /doc_agent/quickstart/guardrail-quickstart.md
+  - step: 4
+    name: "Document"
+    description: "Update runbook + workdoc"
+    documents_to_load:
+      - /modules/<name>/doc/RUNBOOK.md
+pitfalls:
+  - issue: "Missing baseline"
+    solution: "Capture metrics before changes"
+quality_checklist:
+  - "[ ] Baseline + new metrics recorded"
+  - "[ ] Tests/guardrails pass"
+  - "[ ] Docs updated"
+references:
+  - /observability/README.md

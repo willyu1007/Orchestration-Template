@@ -1,0 +1,30 @@
+# Python 
+
+# YAML  DAG 
+pyyaml>=6.0
+
+# 
+pytest>=7.0.0
+pytest-cov>=4.0.0
+
+# 
+# pylint>=2.0.0
+# black>=22.0.0
+radon>=6.0.1  # 
+mypy>=1.0.0   # 
+
+# Schemaagent_lint
+jsonschema>=4.0.0
+
+# fixture_loaderSQL
+# psycopg2-binary>=2.9.0  # PostgreSQL
+
+# Mockmock_generator
+# Faker>=20.0.0  # Mock
+
+# Redis health checks
+redis>=5.0.0
+
+# Auth/security helpers
+pyjwt>=2.8.0
+cryptography>=42.0.0

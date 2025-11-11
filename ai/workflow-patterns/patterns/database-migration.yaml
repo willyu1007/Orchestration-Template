@@ -1,0 +1,52 @@
+pattern_id: "database-migration"
+version: "1.1"
+name: "Database Migration Workflow"
+description: "Safe process for schema/data changes"
+complexity: "medium"
+estimated_time: "30-60 minutes"
+category: "maintenance"
+ai_optimized: true
+prerequisites:
+  - "Workdoc describing change"
+  - "Backups/rollback plan prepared"
+workflow:
+  - step: 1
+    name: "Design"
+    description: "Update table YAML + DB spec"
+    documents_to_load:
+      - /db/engines/postgres/docs/SCHEMA_GUIDE.md
+      - /doc_human/guides/DB_CHANGE_GUIDE.md
+    expected_output:
+      - "Updated YAML"
+  - step: 2
+    name: "Migrations"
+    description: "Create paired SQL scripts"
+    documents_to_load:
+      - /doc_human/guides/process-resources/db-migration-script.md
+    expected_output:
+      - "*_up.sql / *_down.sql"
+  - step: 3
+    name: "Test"
+    description: "Run migrate_check + staging test + rollback"
+    documents_to_load:
+      - /doc_agent/quickstart/guardrail-quickstart.md
+    expected_output:
+      - "Green checks"
+  - step: 4
+    name: "Document"
+    description: "Update workdoc, release notes, test data"
+    documents_to_load:
+      - /doc_human/templates/module-templates/TEST_DATA.md.template
+    expected_output:
+      - "Doc updates"
+pitfalls:
+  - issue: "Missing down script"
+    solution: "Block merge until pair exists"
+quality_checklist:
+  - "[ ] YAML + migrations synced"
+  - "[ ] Guardrails pass"
+  - "[ ] Rollback tested"
+  - "[ ] Docs/test data updated"
+references:
+  - /db/engines/README.md
+  - /doc_human/guides/SCHEMA_GUIDE.md

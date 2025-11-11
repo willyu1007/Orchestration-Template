@@ -1,0 +1,73 @@
+# AI Task Template: Bug Fix
+# 用于指导AI完成bug修复的标准流程
+
+template_id: "bug_fix"
+version: "1.0"
+description: "Standard workflow for fixing bugs"
+estimated_tokens: 2000
+
+steps:
+  - id: "analyze"
+    name: "Analyze Bug"
+    actions:
+      - reproduce_issue
+      - locate_root_cause
+      - check_related_code
+    max_tokens: 400
+    required_context:
+      - error_message
+      - stack_trace
+      - affected_files
+    
+  - id: "fix"
+    name: "Implement Fix"
+    actions:
+      - apply_minimal_change
+      - handle_edge_cases
+      - preserve_compatibility
+    max_tokens: 800
+    principles:
+      - "Minimal change principle"
+      - "Don't break existing tests"
+      - "Add regression test"
+    
+  - id: "test"
+    name: "Verify Fix"
+    actions:
+      - run_existing_tests
+      - add_regression_test
+      - test_edge_cases
+    max_tokens: 500
+    validation:
+      - all_tests_pass: true
+      - bug_not_reproducible: true
+    
+  - id: "document"
+    name: "Update Documentation"
+    actions:
+      - update_changelog
+      - document_fix
+      - update_known_issues
+    max_tokens: 300
+    files:
+      - CHANGELOG.md
+      - doc/BUGS.md
+
+context_strategy:
+  priority:
+    - error_logs: critical
+    - affected_code: high
+    - related_tests: medium
+    - documentation: low
+
+success_criteria:
+  - bug_fixed: true
+  - tests_pass: true
+  - no_regressions: true
+  - documented: true
+
+recovery_strategy:
+  test_failure:
+    - review_changes
+    - check_assumptions
+    - rollback_if_needed

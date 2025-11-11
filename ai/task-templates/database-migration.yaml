@@ -1,0 +1,105 @@
+# AI Task Template: Database Migration
+# 数据库迁移的安全执行流程
+
+template_id: "database_migration"
+version: "1.0"
+description: "Safe database migration with rollback support"
+estimated_tokens: 2200
+
+steps:
+  - id: "plan"
+    name: "Plan Migration"
+    actions:
+      - analyze_current_schema
+      - design_target_schema
+      - identify_data_transformations
+    max_tokens: 400
+    deliverables:
+      - migration_plan.md
+      - risk_assessment.md
+    
+  - id: "write_migration"
+    name: "Write Migration Scripts"
+    actions:
+      - create_up_migration
+      - create_down_migration
+      - add_data_migration
+    max_tokens: 800
+    files:
+      - migrations/{timestamp}_up.sql
+      - migrations/{timestamp}_down.sql
+      - migrations/{timestamp}_data.sql
+    safety:
+      - use_transactions: true
+      - test_rollback: true
+      - backup_required: true
+    
+  - id: "validate"
+    name: "Validate Migration"
+    actions:
+      - syntax_check
+      - dry_run
+      - estimate_impact
+    max_tokens: 300
+    validation_checks:
+      - no_data_loss
+      - reversible
+      - performance_impact
+    
+  - id: "test"
+    name: "Test Migration"
+    actions:
+      - test_on_copy
+      - test_rollback
+      - verify_data_integrity
+    max_tokens: 500
+    test_environment:
+      - use_test_db: true
+      - sample_data: true
+      - measure_time: true
+    
+  - id: "document"
+    name: "Document Changes"
+    actions:
+      - update_schema_docs
+      - write_runbook
+      - update_changelog
+    max_tokens: 200
+    documentation:
+      - db/docs/schema.md
+      - db/runbooks/migration_{version}.md
+      - CHANGELOG.md
+
+safety_checks:
+  pre_migration:
+    - backup_exists: true
+    - maintenance_window: true
+    - rollback_tested: true
+  
+  during_migration:
+    - monitor_locks: true
+    - check_progress: true
+    - watch_errors: true
+  
+  post_migration:
+    - verify_schema: true
+    - test_application: true
+    - monitor_performance: true
+
+rollback_strategy:
+  triggers:
+    - migration_error
+    - data_corruption
+    - performance_degradation
+  
+  actions:
+    - stop_migration
+    - run_down_script
+    - restore_backup
+    - notify_team
+
+context_requirements:
+  - current_schema
+  - target_requirements
+  - data_volume
+  - downtime_tolerance

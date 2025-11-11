@@ -1,0 +1,48 @@
+pattern_id: "api-development"
+version: "1.1"
+name: "API Development Workflow"
+description: "Design, implement, and document a new API endpoint"
+complexity: "low"
+estimated_time: "1-2 hours"
+category: "development"
+ai_optimized: true
+prerequisites:
+  - "Requirements documented in workdoc"
+  - "Contract template ready"
+workflow:
+  - step: 1
+    name: "Design"
+    description: "Define request/response schema"
+    documents_to_load:
+      - /doc_human/templates/module-templates/CONTRACT.md.template
+    expected_output:
+      - "CONTRACT.md section"
+  - step: 2
+    name: "Implement"
+    description: "Add controller/service code and validation"
+    documents_to_load:
+      - /doc_agent/coding/AI_CODING_GUIDE.md
+    expected_output:
+      - "API code"
+  - step: 3
+    name: "Test"
+    description: "Unit + integration tests"
+    documents_to_load:
+      - /doc_agent/coding/TEST_STANDARDS.md
+    expected_output:
+      - "Tests + coverage"
+  - step: 4
+    name: "Docs & Guardrails"
+    description: "Update contract baseline, rerun guardrails"
+    documents_to_load:
+      - /doc_agent/quickstart/guardrail-quickstart.md
+    expected_output:
+      - "Updated docs + green guardrail run"
+quality_checklist:
+  - "[ ] Contract updated"
+  - "[ ] Tests cover success/error paths"
+  - "[ ] Language consistent"
+  - "[ ] Guardrails pass"
+references:
+  - /doc_agent/specs/MODULE_TYPE_CONTRACTS.yaml
+  - /doc_human/templates/module-templates/CONTRACT.md.template

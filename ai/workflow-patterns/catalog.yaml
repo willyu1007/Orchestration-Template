@@ -1,0 +1,88 @@
+---
+audience: ai
+language: en
+version: catalog
+purpose: Workflow pattern catalog
+---
+version: "1.1"
+generated_at: "2025-11-10"
+total_patterns: 8
+patterns:
+  module-creation:
+    name: "Module Creation Workflow"
+    category: "development"
+    complexity: "medium"
+    estimated_time: "2-4 hours"
+    priority: "P0"
+    file: "patterns/module-creation.yaml"
+    tags: ["module", "scaffold"]
+  database-migration:
+    name: "Database Migration Workflow"
+    category: "maintenance"
+    complexity: "medium"
+    estimated_time: "30-60 minutes"
+    priority: "P0"
+    file: "patterns/database-migration.yaml"
+    tags: ["database", "migration"]
+  api-development:
+    name: "API Development Workflow"
+    category: "development"
+    complexity: "low"
+    estimated_time: "1-2 hours"
+    priority: "P0"
+    file: "patterns/api-development.yaml"
+    tags: ["api", "rest"]
+  bug-fix:
+    name: "Bug Fix Workflow"
+    category: "debugging"
+    complexity: "low"
+    estimated_time: "30-90 minutes"
+    priority: "P0"
+    file: "patterns/bug-fix.yaml"
+    tags: ["bug", "regression"]
+  refactoring:
+    name: "Refactoring Workflow"
+    category: "maintenance"
+    complexity: "medium"
+    estimated_time: "1-3 hours"
+    priority: "P1"
+    file: "patterns/refactoring.yaml"
+    tags: ["refactor", "cleanup"]
+  feature-development:
+    name: "Feature Development Workflow"
+    category: "development"
+    complexity: "medium"
+    estimated_time: "4-8 hours"
+    priority: "P1"
+    file: "patterns/feature-development.yaml"
+    tags: ["feature", "delivery"]
+  performance-optimization:
+    name: "Performance Optimization Workflow"
+    category: "optimization"
+    complexity: "medium"
+    estimated_time: "2-4 hours"
+    priority: "P1"
+    file: "patterns/performance-optimization.yaml"
+    tags: ["performance", "latency"]
+  security-audit:
+    name: "Security Audit Workflow"
+    category: "maintenance"
+    complexity: "medium"
+    estimated_time: "2-3 hours"
+    priority: "P1"
+    file: "patterns/security-audit.yaml"
+    tags: ["security", "audit"]
+categories:
+  development: ["module-creation", "api-development", "feature-development"]
+  maintenance: ["database-migration", "refactoring", "security-audit"]
+  debugging: ["bug-fix"]
+  optimization: ["performance-optimization"]
+quick_lookup:
+  "create module": "module-creation"
+  "database change": "database-migration"
+  "build api": "api-development"
+  "fix bug": "bug-fix"
+  "refactor code": "refactoring"
+  "ship feature": "feature-development"
+  "optimize performance": "performance-optimization"
+  "security audit": "security-audit"

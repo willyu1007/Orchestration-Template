@@ -1,0 +1,93 @@
+# AI Task Template: API Endpoint Creation
+# 创建RESTful API端点的标准流程
+
+template_id: "api_endpoint"
+version: "1.0"
+description: "Create RESTful API endpoints with validation and documentation"
+estimated_tokens: 2500
+
+steps:
+  - id: "design"
+    name: "Design Endpoint"
+    actions:
+      - define_route
+      - specify_methods
+      - design_request_response
+    max_tokens: 300
+    outputs:
+      - endpoint_spec.yaml
+    schema:
+      method: ["GET", "POST", "PUT", "DELETE", "PATCH"]
+      path: "/api/v1/{resource}"
+      request_body: object
+      response: object
+    
+  - id: "implement"
+    name: "Implement Handler"
+    actions:
+      - create_handler_function
+      - add_input_validation
+      - implement_business_logic
+      - add_error_handling
+    max_tokens: 1000
+    patterns:
+      - input_validation_first
+      - early_return_on_error
+      - consistent_response_format
+    
+  - id: "middleware"
+    name: "Add Middleware"
+    actions:
+      - authentication
+      - authorization
+      - rate_limiting
+      - logging
+    max_tokens: 400
+    middleware_chain:
+      - auth_required
+      - check_permissions
+      - rate_limit
+      - log_request
+    
+  - id: "test"
+    name: "Create Tests"
+    actions:
+      - unit_tests
+      - integration_tests
+      - api_contract_tests
+    max_tokens: 600
+    test_cases:
+      - happy_path
+      - validation_errors
+      - auth_failures
+      - rate_limit_exceeded
+    
+  - id: "document"
+    name: "Generate Documentation"
+    actions:
+      - openapi_spec
+      - usage_examples
+      - error_codes
+    max_tokens: 200
+    documentation:
+      - swagger.yaml
+      - README.md
+      - postman_collection.json
+
+context_strategy:
+  cache_enabled: true
+  priority_files:
+    - api_gateway/routes.yaml
+    - common/middleware/*
+    - doc/API_STANDARDS.md
+
+validation:
+  - openapi_compliant: true
+  - follows_rest_principles: true
+  - has_error_handling: true
+  - includes_tests: true
+
+performance_targets:
+  response_time: "<100ms"
+  throughput: ">1000 req/s"
+  error_rate: "<0.1%"

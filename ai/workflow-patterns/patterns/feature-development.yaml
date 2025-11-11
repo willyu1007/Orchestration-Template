@@ -1,0 +1,41 @@
+pattern_id: "feature-development"
+version: "1.1"
+name: "Feature Development Workflow"
+description: "Ship a multi-step feature across code, docs, and tests"
+complexity: "medium"
+estimated_time: "4-8 hours"
+category: "development"
+ai_optimized: true
+prerequisites:
+  - "Workdoc plan + tasks"
+  - "Dependencies identified"
+workflow:
+  - step: 1
+    name: "Plan"
+    description: "Break scope into milestones, confirm language policy"
+    documents_to_load:
+      - /doc_human/templates/workdoc-plan.md
+  - step: 2
+    name: "Implement"
+    description: "Code + tests"
+    documents_to_load:
+      - /doc_agent/coding/AI_CODING_GUIDE.md
+      - /doc_agent/coding/TEST_STANDARDS.md
+  - step: 3
+    name: "Docs"
+    description: "Update module docs, README, workdoc"
+    documents_to_load:
+      - /doc_human/templates/module-templates/
+  - step: 4
+    name: "Validation"
+    description: "Run guardrails, dev_check, update release notes"
+    documents_to_load:
+      - /doc_agent/quickstart/guardrail-quickstart.md
+quality_checklist:
+  - "[ ] Workdoc updated"
+  - "[ ] Tests/coverage met"
+  - "[ ] Docs in English"
+  - "[ ] Guardrails pass"
+references:
+  - /ai/workflow-patterns/README.md
+  - /doc_human/guides/MODULE_INIT_GUIDE.md

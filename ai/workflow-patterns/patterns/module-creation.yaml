@@ -1,0 +1,74 @@
+pattern_id: "module-creation"
+version: "1.1"
+name: "Module Creation Workflow"
+description: "End-to-end workflow for adding a new module to the repository"
+complexity: "medium"
+estimated_time: "2-4 hours"
+category: "development"
+ai_optimized: true
+prerequisites:
+  - "Document requirements and boundaries in a workdoc plan"
+  - "Confirm module type (see MODULE_TYPES.md)"
+  - "Review language policy (`config/language.yaml`)"
+workflow:
+  - step: 1
+    name: "Plan"
+    description: "Create/refresh workdoc (plan/context/tasks)"
+    documents_to_load:
+      - /doc_human/templates/workdoc-plan.md
+    expected_output:
+      - "modules/{module_name}/plan.md"
+  - step: 2
+    name: "Scaffold"
+    description: "Run `make ai_begin MODULE={module_name}` and review structure"
+    documents_to_load:
+      - /doc_human/templates/module-templates/README.md
+    expected_output:
+      - "modules/{module_name}/"
+  - step: 3
+    name: "Docs"
+    description: "Fill agent + doc templates (contract, runbook, test plan, etc.)"
+    documents_to_load:
+      - /doc_human/templates/module-templates/
+    expected_output:
+      - "modules/{module_name}/agent.md"
+      - "modules/{module_name}/doc/*.md"
+  - step: 4
+    name: "Code & Tests"
+    description: "Implement core logic + required tests"
+    documents_to_load:
+      - /doc_agent/coding/AI_CODING_GUIDE.md
+      - /doc_agent/coding/TEST_STANDARDS.md
+    expected_output:
+      - "src/tests changes"
+  - step: 5
+    name: "Registration"
+    description: "Update routing/registry entries, run guardrails"
+    documents_to_load:
+      - /doc_agent/orchestration/routing.md
+      - /doc_human/guides/MODULE_INSTANCES.md
+    expected_output:
+      - "Updated registry + module catalog"
+  - step: 6
+    name: "Validation"
+    description: "Run `make dev_check`, `make agent_trigger_test`, ensure docs/tests in English"
+    documents_to_load:
+      - /doc_human/guides/module-resources/init-validation.md
+    expected_output:
+      - "All checks green"
+pitfalls:
+  - issue: "Module boundaries unclear"
+    solution: "Review MODULE_TYPES.md and update plan"
+  - issue: "Templates left in Chinese"
+    solution: "Follow `config/language.yaml`, rerun doc_style_check"
+quality_checklist:
+  - "[ ] Workdoc updated"
+  - "[ ] agent.md passes `make agent_lint`"
+  - "[ ] Docs filled in English"
+  - "[ ] Tests + coverage target met"
+  - "[ ] Registry + context routes updated"
+  - "[ ] `make dev_check` successful"
+references:
+  - /doc_agent/quickstart/module-init.md
+  - /doc_human/guides/MODULE_INIT_GUIDE.md
+  - /doc_human/templates/module-templates/

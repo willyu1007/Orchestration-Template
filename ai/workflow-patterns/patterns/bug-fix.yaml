@@ -1,0 +1,51 @@
+pattern_id: "bug-fix"
+version: "1.1"
+name: "Bug Fix Workflow"
+description: "Reproduce, fix, and verify issues without regressing other modules"
+complexity: "low"
+estimated_time: "30-90 minutes"
+category: "debugging"
+ai_optimized: true
+prerequisites:
+  - "Workdoc entry created"
+  - "Logs/tests linked to the bug"
+workflow:
+  - step: 1
+    name: "Reproduce"
+    description: "Capture failing scenario + guardrail history"
+    documents_to_load:
+      - /doc_human/templates/workdoc-context.md
+    expected_output:
+      - "Reproduction steps"
+  - step: 2
+    name: "Fix"
+    description: "Implement minimal change, keep comments/logs in English"
+    documents_to_load:
+      - /doc_agent/coding/AI_CODING_GUIDE.md
+    expected_output:
+      - "Patched code"
+  - step: 3
+    name: "Test"
+    description: "Add regression test + run suite"
+    documents_to_load:
+      - /doc_agent/coding/TEST_STANDARDS.md
+    expected_output:
+      - "Test file + passing run"
+  - step: 4
+    name: "Document"
+    description: "Update BUGS/CHANGELOG/workdoc"
+    documents_to_load:
+      - /doc_human/templates/module-templates/BUGS.md.template
+    expected_output:
+      - "Doc updates"
+pitfalls:
+  - issue: "Unclear reproduction steps"
+    solution: "Record CLI commands/logs in workdoc context"
+quality_checklist:
+  - "[ ] Bug logged"
+  - "[ ] Regression test added"
+  - "[ ] Guardrails rerun"
+  - "[ ] Docs updated in English"
+references:
+  - /doc_human/templates/workdoc-context.md
+  - /doc_human/templates/module-templates/BUGS.md.template
