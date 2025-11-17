@@ -13,75 +13,100 @@
 ### 1.4 系统的复杂性方面，这确实是我们在从零搭建repo模版时候需要考虑的问题。请将引导文档相关的内容视为参考，实际构建方案中需要更加稳健的流程，避免意义不明的重叠性和没有必要的复杂性。可以考虑先明确核心思路，穷举所需的基础功能和规范文档，再通过聚类或类似的方法整合基础功能和文档，在自下而上的搭建过程中，逐成检查以消除重叠性和降低复杂性。1.5. 路由层级方面，我们分为几种情况来讨论。如果开发过程几种在某一模块功能上，则上下文、知识文档路由、功能路由、策略和规范等都应该限定在模块实例的目录中（让代码大模型直接去找模块目录）。如果是跨模块的功能开发，则需要在任务编排时考虑模块实例的关系，任务编排完成后，每个步骤仍然建议通过具体的模块实例来实现，也就是先做顶层编排（路由体系是跨模块实例的），再做具体实现（具体需求路由至具体模块实例）。另外，项目初始化和模块实例初始化是两种不同的需求，我会在后文中给出相关需求和设想。
 
 ## 2. 必要文档
-我们将构建repo模版的文档分为以下类别：规范文档、骨架文档、人类阅读约旦。
+
+我们将构建repo模版的文档分为以下类别：规范文档、脚手架文档、人类阅读文档。
+
+综述和体系路由入口，模块文档应该直接跳转到对应的承接文档，也就是整体使用指南，所有AGENTS文档都可以参考
 
 ### 2.1 规范文档
-规范文档主要是来体现，用来帮助代码大模型快速和repo建设思路对齐，并让代码大模型按照要求进行工作（特别是文档维护），使其融入repo体系。
+规范文档用来明确项目全周期都应该遵循的原则，这类文档的核心目标就是帮助代码大模型遵循规则，融入我们设想的体系中，并按照要求进行工作。规范类文档需要满足三种情景的使用需求：
 
-- 用以说明建设思路的文档
-  
-- 用以规范ROUTING路由体系的文档
-- 用以规范CAPABILITIES路由体系相关的文档
-- 用以说明AI友好
-  
-- 用以规范全局AGENTS的文档，这些文档按照类型划分，每类型应该在根目录下的AGENTS.md文档维护一个路由。承接路由的文档应该满足渐进原则。承接路由的文档可能是独立的（例如agent的策略说明），也可能是ROUTING的叶子文档（例如格式和安全检验等）。请你根据引导文档和常见的AGENTS.md，给出完整的全局AGENTS相关的规范文档，
+- 说明模版的建设思路和规则规范：例如ROUTING路由体系、能力路由体系、AI友好方面的规范、注册和更新、以及其他所有引导文章中提到的思路和规范。我们需要让代码大模型可以迅速掌握核心架构思路以及使用方法。在repo模版完成后，这类文档也就确定了，通畅只会随着模版的升级而变化。我们可以对建设思路和规则规则进行预分类，每个类型应该在根目录的AGENTS.md文档中维护一个路由节点。承接路由的文档可能是独立的，也可能是ROUTING的叶子文档，但都需要按照渐进原则设计。
+- 可以将模版顺利转换成具体项目：除了通用的规则外，我们还需要保证每个项目需求可以被落实成文档，并正确接入我们设计的体系中，以保证代码大模型可以按照统一的思路获取项目相关的要求。
+- 可以支撑实际的开发过程：模块化开发的思路，
 
-- 初始化相关
+### 2.2 脚手架文档
 
-### 2.2 骨架文档
+有以下4类需求：
+- 初始化构造（骨架 + 基本内容）
+- 添加规范 （是否有固定的格式要求，文档间的联动等）
+- 修改/删除 规范（什么算修改）
+- 使用指引（如何使用这些文档）
 
+
+### 2.3 人类阅读文档
+
+- README
+- 信息记录：例如注册细节，运维记录，数据库表
+- 数据流转：模块概览，数据
+- 快速上手：维护一些列说明文档，可以理解文2.1章规范文档的给人阅读版本。
+
+### 清单
 - root AGENTS.md
 - root CAPABILITIES.md
-- root 
-核心路由文档
-
-README.md
-
-doc_agent/ROUTING.md（
+- root ROUNTIN.md
+- README.md
+- doc_agent/ROUTING.md（
+- doc_agent/AGENTS.md
+- doc_agent/CAPABILITIES.md
+- 编排配置文件（YAML/JSON）
+  - doc_agent/orchestration/registry.yaml – 编排器注册表
+  - doc_agent/orchestration/capabilities.yaml
+  - doc_agent/orchestration/agent-graph.yaml
+  - doc_agent/orchestration/doc-node-map.yaml
+  - doc_agent/orchestration/agent-triggers.yaml
+  - doc_agent/orchestration/trigger-map.yaml
+- Policy and Guide Documents (AI-facing, lightweight docs on specific rules or procedures):
+  - Security/Compliance Policies (doc_agent/policies/*.md):
+  - Operational Guides and “Quickstarts” (doc_agent/quickstart/ and doc_agent/flows/)
+  - Documentation Standards Spec (doc_agent/guide/documentation-spec.md or similar)
+  - Script Usage Guide (scripts/operations-guide.md and sub-guides)
+- Module System Documents:
+  - modules/ROUTING.md
+  - Module Type Contracts (modules/<type>/TYPE_CONTRACT.md)
+  - Module Instance Documentation (within each modules/<instance>/doc/ directory)
+    - modules/<instance>/doc/ROUTING.md 
+    - modules/<instance>/doc/AGENTS.md – Module Agent Policy
+    - modules/<instance>/doc/CAPABILITIES.md 
+    - modules/<instance>/doc/CONTRACT.md
+    - Guides/Runbooks/Specs (module-specific)
+      - Module Quickstart Guide
+      - Runbook/Operations Guide:
+      - Module Design Spec / Guide
+      - Changelog (module-specific)
+      - Known Issues / Lessons Learned
+    - All module doc files will have full front matter specifying audience, purpose, doc_role (e.g. guide, spec, runbook, etc.)
+  - modules/registry.yaml 
+    - id: a unique identifier (e.g. <type>.<instance> name),
+    -	type_path and instance_path: directory paths,
+    -	route_refs: pointers to the module’s key docs (quickstart or README links, etc.),
+    -	graph_bindings: how this module’s agent is connected in the global graph (e.g. which parent node it attaches to),
+    -	capability_refs: links to any capabilities provided,
+    -	requires / provides: dependency metadata (which other modules or global services it relies on or offers to),
+    -	related_modules: siblings or alternatives,
+    -	ownership, status (active/deprecated), doc_set completeness, last_verified_at, etc.
+    This registry is updated whenever modules are added/removed or changed, and serves as the basis for syncing the orchestrator’s view of modules
+  - doc_agent/orchestration/module-registry.yaml
+- AI Workdocs and Logs
+  - Global Workdocs (ai/workdocs/active/…) 
+    - plan.md
+    - context.md 
+    - tasks.md 
+    - context/ subdocs
+    - These workdocs are maintained by the AI (with human oversight when needed) to recover context and ensure continuity between sessions.
+  - Module Workdocs (modules/<instance>/workdocs/active/…)
+  - handoff-history.md – A global handoff log that records important transfer points, such as approvals, phase completions, or when development is handed over between AI and humans.
+  - Maintenance Reports (ai/maintenance_reports/*.md)
+    - route-health.md 
+    - retrospective.md
+    - Evolution or progress logs 
+    - These reports are primarily for maintainers to gauge system health and for the AI to plan optimizations.
+- Ops/Evaluation Documents 
 
 ### 2.3 面向人类
 
-### 核心路由文档：
-- **Root ROUTING.md**：整个仓库的顶级文档路由，包含context_routes结构
-- **Root README.md**：面向人类开发者的高级概述
-- **doc_agent/ROUTING.md**（可选）：doc_agent下的路由节点
-- **modules/ROUTING.md**：模块索引路由
 
-### 核心策略文档：
-- **doc_agent/AGENTS.md**：全局编排器代理策略（≤200行）
-- **doc_agent/CAPABILITIES.md**：全局能力索引（~250行）
 
-### 编排配置文件（YAML/JSON）：
-- **doc_agent/orchestration/registry.yaml**：编排器注册表
-- **doc_agent/orchestration/capabilities.yaml**：基础能力注册表
-- **doc_agent/orchestration/agent-graph.yaml**：智能体编排流程图
-- **doc_agent/orchestration/doc-node-map.yaml**：文档与图节点的映射
-- **doc_agent/orchestration/agent-triggers.yaml**：触发器定义
-- **doc_agent/orchestration/trigger-map.yaml**：自动生成的触发器映射
-
-### 策略与指南文档：
-- **Security/Compliance Policies (doc_agent/policies/*.md)**：安全操作程序与规则
-- **Operational Guides and Quickstarts (doc_agent/quickstart/)**：常见工作流的操作指南
-- **Documentation Standards Spec**：文档规范和前置元数据模式指南
-- **Script Usage Guide**：脚本使用指南
-
-### 模块系统文档：
-- **Module Type Contracts**：模块类型契约
-- **Module Instance Documentation**：每个模块实例的完整文档集
-  - ROUTING.md（本地路由）
-  - AGENTS.md（模块代理策略）
-  - CAPABILITIES.md（模块能力索引）
-  - CONTRACT.md（模块接口契约）
-  - Guides/Runbooks/Specs（模块特定）
-- **modules/registry.yaml**：模块注册表（SSOT）
-
-### AI工作文档与日志（动态）：
-- **Global Workdocs (ai/workdocs/active/...)**：项目级别的活动任务上下文
-- **Module Workdocs**：模块特定的开发上下文
-- **handoff-history.md**：全局交接日志
-- **Maintenance Reports**：维护报告（route-health.md、retrospective.md等）
-
-**文档清单总结**：涵盖了指南中描述的所有主要文档类型和资源。每个引入的标准或机制都有对应的文档支持。
 
 规范文档，路由等基础设施的脚手架搭建
 
@@ -91,3 +116,66 @@ doc_agent/ROUTING.md（
 模块实例初始
 
 
+
+### 初始化功能
+
+- 脚手架命令 (make ai_begin MODULE=<name>)
+- 文档/注册表同步脚本（python scripts/module_registry_sync.py）
+- 文档-图映射同步（python scripts/doc_node_map_sync.py）
+- 路由检查（运行 route_lint 目标脚本 / doc_route_check.py 脚本）
+- 能力索引一致性检查（make capability_index_check / 脚本）
+- Orchestrator 注册表检查 (python scripts/registry_check.py)
+- Agent Lint (python scripts/agent_lint.py)
+- 代理图结构检查（python 脚本/agent_graph_check.py）
+- 触发器映射同步（python 脚本/trigger_map_sync.py）
+- 触发器一致性检查（将 trigger_check 设置为目标）
+  - Runs a dry-run simulation of all triggers using trigger_runner.py
+  - Possibly scans tasks.
+  - Checks for “孤立 trigger” (orphan triggers with no policy or no matching events) and would alert if found 
+  - The results (trigger simulation outcomes, orphan check) are logged to route-health.md and any issues need to be fixed or documented.
+- 触发执行脚本（python scripts/trigger_runner.py）
+  -	It listens for or is called with specific events (like a file commit or a user command).
+	-	On an event, it finds the corresponding trigger in agent-triggers.yaml, loads the associated policy section from an AGENTS.md (Trigger Handling section), and preloads any specified docs (e.g. relevant SOPs)
+	-	If required_commands are specified (like running tests or lint first), it executes those (possibly via PreToolUse hook)
+	-	It then invokes the target agent or tool (e.g. calls the entrypoint of the capability specified).
+	-	After execution, in the PostToolUse phase, it logs the output and any files changed to the context logs (context.md#Automation and context/active-files.md)
+	-	In dry-run mode, it would simulate these steps without making changes, to validate that the flow is set up correctly
+	-	This tool is essential for automating responses to triggers (like auto-running DB migrations check when a new migration file is added, etc.)
+- Guardrail Execution Script (python scripts/guardrail_runner.py):
+  - On a critical event (e.g. code about to connect to prod DB, or a PR hits a blocked trigger), this is called to handle the approval sequence ￼ ￼.
+	-	It loads the relevant guardrail policy from AGENTS.md (or Trigger Handling for that trigger) ￼, ensures required_commands (like extra lint or safety checks) are executed and passed ￼.
+	-	It then helps prepare the approval bundle: gathering diff, test results, risk assessment into the context.md#Approvals section ￼ ￼ for the human approver to review.
+	-	It waits or signals for approval input (this may be out-of-band from AI, but the process is documented).
+	-	If approved, it logs the decision (with rationale, rollback plan) in context and plan docs ￼ ￼, updates tasks (marks Guardrail: task as completed) ￼, and allows the originally blocked action to proceed.
+	-	If rejected or requiring rollback, it ensures the rollback script (defined either in policy or as per approver notes) is executed and logs the outcome ￼.
+	-	Dry-run (--dry-run all) mode will simulate the above for all defined guardrail triggers to ensure the process can complete automatically (i.e., all required commands exist and pass, all references are correct) ￼.
+	-	This function is crucial to maintain a closed-loop approval mechanism and is tightly integrated with the AI’s workflow (the AI must pause and wait for approval where required, then read the approver’s decision from the context to continue).
+- Context Usage Tracker (python scripts/context_usage_tracker.py):
+  - Trigger hit rates (how often each trigger fired over time, how often guardrails were invoked, etc.) ￼.
+	-	Average execution times per agent or tool, failure rates, etc.
+	-	These stats are then written to ai/maintenance_reports/route-health.md for analysis ￼.
+	-	This helps identify hotspots or inefficiencies in the orchestration, e.g. if a particular path is very slow or a trigger is firing too frequently.
+- AI Chain Optimizer (python scripts/ai_chain_optimizer.py)
+  - E.g., if it finds an 80% hit rate on one path, it might suggest making that path more direct (less hops).
+	- Or if certain nodes often fail and fallback, propose improvements or splitting/merging nodes.
+	- It would write recommendations to route-health.md or a similar report.
+- Schema/Contract Validators：
+  - Database Schema Linter (python scripts/db_lint.py and make db_lint): 
+	-	Migration Check (make migrate_check / part of db agent tools):
+	-	Rollback Check (make rollback_check):
+	-	These DB-related commands are likely integrated with the Data & Schema agent and listed in its tools_allowed in registry (e.g., make db_lint, make migrate_check, etc.) .
+	-	API Contract Checker (python scripts/type_contract_check.py and make contract_compat_check): 
+- Continuous Integration (CI) Composite Commands:
+  - make dev_check.
+	-	make registry_gen.
+	-	make guardrail_check
+	-	make module_health_check
+	-	Periodic Cron/CI tasks: Weekly or periodic tasks like:
+    - Running make trigger_check and make guardrail_check to produce updated telemetry.
+  	- Exporting snapshots of trigger-map.yaml to check for consistency manually ￼.
+	  - Checking for any “孤立” (orphaned) docs or nodes not covered by any route (perhaps part of route lint already).
+- Config Lookup Utility (python scripts/config_lookup.py and make config_show)
+- Visualization and Reporting Tools
+  - The guide mentions a make trigger_visualizer to output a diagram of the agent graph or trigger map. 
+	-	Similarly, after all setup, generating an Agent Index or summary (maybe a Markdown table of agents and their roles) could be useful, though not explicitly mentioned, it could be derived from registry.yaml for documentation.
+	-	If needed, a Telemetry Dashboard script could compile the route-health metrics into charts or more digestible reports, but that may be beyond initial scope and left for future.
