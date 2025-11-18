@@ -107,17 +107,6 @@
     - These reports are primarily for maintainers to gauge system health and for the AI to plan optimizations.
 - Ops/Evaluation Documents 
 
-### 2.3 面向人类
-
-
-
-
-规范文档，路由等基础设施的脚手架搭建
-
-
-## 初始化相关
-项目初   
-模块实例初始
 
 
 
@@ -183,3 +172,74 @@
   - The guide mentions a make trigger_visualizer to output a diagram of the agent graph or trigger map. 
 	-	Similarly, after all setup, generating an Agent Index or summary (maybe a Markdown table of agents and their roles) could be useful, though not explicitly mentioned, it could be derived from registry.yaml for documentation.
 	-	If needed, a Telemetry Dashboard script could compile the route-health metrics into charts or more digestible reports, but that may be beyond initial scope and left for future.
+
+
+
+
+## 基础功能
+### 功能体路由
+关于功能体路由，我有两点想要讨论：
+1. 引导文档中的构想是功能体路由只维护功能体作为节点，但基础能力和功能体都需要注册（两套注册系统）。如果功能路由维护完整的基础功能，一定程度上可以增强代码大模型的可控性，但这也增加了编排系统的复杂程度。是不是可以分别维护功能路由，一套是打包好了的功能体路由，一套是基础功能路由，两套路由间保持松耦合，并鼓励代码大模型优先使用功能体路由。另外一个程度较轻的相关问题是CAPABILITIES 的命名不够清晰（基础能力使用的capability，编排系统面向又是agent）
+2. 如果将模块作为编排节点 ，模块间的关系要如何体现？使用subroute吗？每个模块实例可能也包含多个功能体（或基础功能），当前这套编排体系可以支持吗？ 
+
+### 功能定义和组合
+1. 你给出的6个可以组合的智能体很贴合模板需求。需要说明的是，我们是从零开始搭建repo模板，还没有实现任何脚本。所以基础功能方面，你可以参考第三章和系统需求，自行整理并给出说明，切实帮助后续形成落地方案。
+2. 我们需要开发一个功能来帮助形成agent（注册基础功能比较直观，但agent的注册要繁杂许多，要保证这个过程规范可用）。同理，trigger 和guardrail也会随着项目开发动态变化，也需要功能体来帮忙正确搭建一个trigger或guardrail。这样做是为了确保项目关键内容的SSOT，并可以在生成trigger时就”ensure triggers are well-defined so as not to overwhelm or conflict”。
+
+
+## 实际开发
+
+### 跨模块开发
+跨模块实例的开发可能需要一套更加严谨的流程。考虑以下几个方案：
+1. 维持现状，通过链接不同模块上下文/工具，让编排系统来调度输出；
+2. 由于模块类型是有层级的，将跨模块的需求抽象成一个上级模块的功能（例如两个二级模块）；
+3. 要求代码大模型在任务编排涉时检查是否涉及多个模块，对于跨模块的情况，要求进一步拆分任务编排（一个任务仅允许调用一个模块实例）。
+
+我觉得方案1的问题在于要求代码大模型理解并掌握跨模块调用编排系统和路由体系的能力，这一点目前并未实现。方案2的问题在于，这种结构并没有遵循一套清晰的原则，增加了不必要的混乱。方案3的问题在于灵活度太低，引入的限制条件可能会降低代码质量。请给出你的想法。
+
+" can the orchestrator effectively manage tasks in multiple modules concurrently or complex flows through modules?"这是一个充满挑战的常见问题，我们必须给出明确的方案。
+
+### 模块关系的维护
+引导文档中提到，模块关系图分为给人读的和给AI读的两个版本。我们可以仅维护给AI读的版本（作为模块关系的SSOT）。如有人工阅读需求开发一个脚本即可（当前也不需要开发）。
+
+### 文档阅读
+- 你指出 "AGENTS.md as Gateway: Typically, the reading order is ROUTING.md -> AGENTS.md (policy) -> CAPABILITIES.md -> actual guides/scripts"。实际运行过程中，代码大模型可能是将AGENTS.md作为入口。此外，为了保证第一入口的统一（保证规则规范一定被阅读，指南文档则可以通过文档路由体系阅读），我们是不是可以只在根目录下保留AGENTS.md，根级ROUTING.md和CAPABILITIES.md可以放到doc_agent根目录下，根级README.md也可以放到doc_human根目录下。
+- 你对AGENTS.md体系的解读很到位，也提出了一些很好的实践建议（例如维护一个AGENTS.md的索引，这相当于另一套路由体系）。请确保可以落实到repo模板搭建计划中。正如你所说"have to maintain consistency that what AGENTS.md says is reflected in triggers and tools"，如果有任何新增或删除的AGENTS.md、或是某个AGENTS.md目的性发生变更，我们也同样需要保证整个AGENTS.md体系可以同步。
+
+### AI友好
+1. 你提到的动态上下文管理机制（Dynamic Context Management），滑动窗口+摘要机制的组合确实可以帮助清理不必要的上下文。但有两个问题：要如何设计滑窗、以及该机制的触发规则。我的想法，workdocs文档的写入需要添加时间和计数（用于滑窗），清理原则综合考虑总行数（例如120行）、计数（例如5次）、以及时间（例如30天），并使用摘要-删除两段式的清理方法。触发可以放进CI而不是交给agent。
+2. 你提到的增加一个状态来确保AI写入了相关内容“could enforce something like ensuring tasks have statuses”，这个做法很好，可以加到计划中。
+3. 引导文档中的checklist都是示意，实际落地checklist需要重写以保证各流程的鲁棒性。checklist可以控制在repo模板所需的范畴内，不考虑项目特定的需求。
+4. 我们是否应该规定代码大模型一次变更上限，避免代码大模型完成一大段代码后再写入的情况。我感觉没有这个必要，鼓励AI使用workdocs即可。
+
+
+## 注册相关
+- 关于Documentation Routing Registration，有一点需要声明，文档路由体系的对象只有ROUTING.md 和其叶子文档，并不包含叶子节点以下的文档，同样也不包含给人阅读的文档。所以文档是否能被触及或是否需要被触及，似乎需要一个更加严谨的规则。但核心原则一定要满足：ROUTING.md和叶子文档一定要注册，叶子文档以下要遵循渐进式原则。
+
+- 是否考虑给 guardrail 也增加一个注册机制，正像你说的，"one place to update for tool permissions, which is easier to maintain than editing multiple AGENTS files"，但仍然请你评估此做法的必要性和收益。
+
+
+
+
+## 你给出的建议
+
+- 你提到的大规模重构的风险，我暂时不想引入复杂的重构功能，但如果我们要求一次仅允许对单一功能、文档、模块进行调整，是否可以在很大程度上解决重构问题？这里还有一个需要考虑的点，例如删除模块时，模块本身包含有功能和文档，还会涉及共用文档和功能，需要先调整包含的内容，才允许对模块进行删除（其他操作好像不涉及这个问题）。我们需要设计相关的约束条件，加入guardrail。
+- 关于repo模板和项目规模的问题，增加初始化可选项是个很好的思路，有利于避免小型项目过重的流程管理负担。问题在于，建设思路是由多个复杂系统组合而成，需要结合起来才能发挥作用。我觉得可以在完成全量化的repo模板后，再提炼出一个轻量化的版本用于单模块实例的项目
+- 你提到自动化维护的可行性存在问题（"depends on fine-tuning scripts to the project"）。你同时提到，AI可以有效的处理繁琐流程（如YAML和运行脚本更新）。所以在repo模板的建设过程中，我们可以针对引导文档提到的4个建设思想和3套关键体系，构建值得信赖的自动化维护方案，即便可能增加一定的脚本运行开销。
+- 给人读的入门指南，我计划等将repo模板搭建完成后，再进行整理，所以当前阶段我们不考虑该需求。
+- 你提到的"Automate Lesson Integration"，想法很棒。我希望可以把这个想法加入repo模板的搭建中。另外，除了和guardrail机制外，该功能最好不要和其他机制耦合。
+- 你提到的"Unified Configuration Schema"，使用"single source (like a YAML tree)" + 相关工具的组合可以进一步提到可靠性。
+- 触发器的优先级和冲突机制（特别是同时命中多个触发器的问题）似乎很难有预置的统一解决方案，优先级的定义也很难遵循明确的规则。我觉得比较容易落地的方案为：引入优先级机制并要求按照优先级触发，同时记录多重命中的情况，方便后续优化。
+- 关于持续集成的CI定时任务，我认为是可行的。在实现repo模板时，这些CI定时任务的检查范围应该限定在引导文档的主要内容中。另外，考虑到代码大模型有PR review 的功能，是否也可以在PR Review的过程中，添加检验要求（考虑把PR Review并入到路由体系）。
+- 多语言支持、成本监控、用户反馈循环，可以列入后续计划，当前不予考虑。
+
+## 初始化相关
+最后，我们来考虑repo模板搭建完成后，如果对接实际项目。
+
+### 模块实例初始化
+
+### 项目初始化   
+我们应该仿照模块实例初始化的过程，搭建一套项目初始化的脚手架。核心逻辑仍然是交互式收集必要信息，帮助完成
+同样的，我们可以创建一个临时的需求文档（或者由用户上传初版需求）
+
+
