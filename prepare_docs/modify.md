@@ -25,9 +25,7 @@
     - 在搭建模板时，先明确核心思路，列出所需基础功能和规范文档，然后对这些要素进行归类整合，采取自下而上的方式逐步搭建。
     - 每步都检查并剔除多余部分，降低系统复杂性。此调整旨在确保流程稳健清晰，避免无效冗余设计，提高模板的可维护性。
 
--   **结构调整**：原设计认为，每个有子目录的目录都需要单独维护路由体系文档（ROUTING.md）、功能体系文档（ABILITY.md）、和策略文档（AGENTS.md）。讨论后决定：
-    - 项目根目录：只保留AGENTS.md，使其成为全局策略和护栏的唯一入口
-    - 初版目录结构
+-   **结构调整**：原设计认为，每个有子目录的目录都需要单独维护路由体系文档（ROUTING.md）、功能体系文档（ABILITY.md）、和策略文档（AGENTS.md）。讨论后决定：根目录下只保留AGENTS.md，使其成为全局策略和护栏的唯一入口
    
 ## 2. 文档路由体系
 
@@ -53,66 +51,66 @@
     - high tier 使用 "ability_registry"进行注册，low tier 使用 "method_registry"进行注册，
     - low tier 使用 "method_registry “进行注册，以业务动作为主键，同一业务动作允许多种实现。
     - low tier的命名方式使用 `base.<domain>.<action>`, 参考格式：
-        ``` yaml
-        - id: base.db.migrate
-        tier: low
-        kind: script       
-        script: scripts/db/migrate.py:main
-        inputs: ...
-        outputs: ...
-        owner: ...
-        tags: [db, migration]
+    ``` yaml
+    - id: base.db.migrate
+    tier: low
+    kind: script       
+    script: scripts/db/migrate.py:main
+    inputs: ...
+    outputs: ...
+    owner: ...
+    tags: [db, migration]
 
-        - id: base.db.query
-        tier: low
-        kind: mcp
-        mcp_server: cloud-db
-        mcp_tool: query
-        inputs: ...
-        outputs: ...
-        owner: ...
-        tags: [db, external]
+    - id: base.db.query
+    tier: low
+    kind: mcp
+    mcp_server: cloud-db
+    mcp_tool: query
+    inputs: ...
+    outputs: ...
+    owner: ...
+    tags: [db, external]
 
-        - id: base.db.call
-        tier: low
-        kind: api
-        api_server: QWEN
-        api_key: ...
-        inputs: ...
-        outputs: ...
-        owner: ...
-        tags: [llm, external]
+    - id: base.db.call
+    tier: low
+    kind: api
+    api_server: QWEN
+    api_key: ...
+    inputs: ...
+    outputs: ...
+    owner: ...
+    tags: [llm, external]
 
-        ```
+    ```
     - high tier的命名方方式： `able.<domain>.<intent>`, 参考格式：
-        ```
-        - id: able.db.apply_all_migrations
-        tier: high
-        kind: workflow
-        domain: db
-        intent: apply_all_migrations
-        steps:
-            - base.db.migrate
-            - base.db.check_health
-        depends_on:
-            - base.db.migrate
-            - base.db.check_health
-        owner: ...
-        maturity: candidate
+    ``` yaml
+    - id: able.db.apply_all_migrations
+    tier: high
+    kind: workflow
+    domain: db
+    intent: apply_all_migrations
+    steps:
+        - base.db.migrate
+        - base.db.check_health
+    depends_on:
+        - base.db.migrate
+        - base.db.check_health
+    owner: ...
+    maturity: candidate
 
-        - id: able.repo.maintenance_assistant
-        tier: high
-        kind: agent
-        domain: repo
-        intent: maintenance_assistant
-        can_call:
-            - base.db.query
-            - base.db.migrate
-            - base.fs.read_file
-            - base.mcp.*         # 某些 mcp 能力
-        owner: ...
-        maturity: experimental
-        ```    
+    - id: able.repo.maintenance_assistant
+    tier: high
+    kind: agent
+    domain: repo
+    intent: maintenance_assistant
+    can_call:
+        - base.db.query
+        - base.db.migrate
+        - base.fs.read_file
+        - base.mcp.*         # 某些 mcp 能力
+    owner: ...
+    maturity: experimental
+    ```    
 
 -   **机制增强**：关于模块实例和编排节点的关系原设计未详述。涉及跨模块功能调用的流程十分模糊，经由讨论，功能理由需要做如下调整：
     -   两套注册体系（ability_registry和method_registry）都需要加上`owner_id`字段
@@ -239,16 +237,29 @@
 ## 5. 模块化思想
 
 -   **命名规范**：原设计在5.2.1“初始化注册流程”中将模块初始化产出概括为同步“八大文档”。讨论认为该表述已陈旧且不精准。现改为直接罗列模块初始化需生成的具体内容，并强调仅允许通过脚手架完成模块初始化。
+    -   模块目录规范：`modules/<mod_id>/`；`mod_id` 规则：`mod.<domain>.<name>`（蛇形或短横线均可，但统一在 lint 中约束）。
+    -   模块清单文件：`modules/<mod_id>/MANIFEST.yaml`（受 `spec/module_manifest.schema.yaml` 约束），示例：
+
+
     -   经由脚手架生成后的骨架包括：
-        -   模块目录结构、`doc/`
-        -   下三大AI文档、`workdocs/`  目录、配置文件、前后端代码框架等。
+        -   模块目录`modules/<mod_id>/`；`mod_id` 规则：`mod.<domain>.<name>`
+        -   模块根级清单文档
+            -  `modules/<mod_id>/MANIFEST.yaml`
+            -  `modules/<mod_id>/AGENTS.md`
+            -  `modules/<mod_id>/ABILITY.md`
+            -  `modules/<mod_id>/ROUTING.md`（如果模块功能简单，这不需要）
+        -   子级目录
+            -   上下文目录：`workdocs/`
+            -   知识文档目录：`doc/` 
+            -   配置文件：`config/`
+            -   代码框架：`fronten_end/`、`back_end/`、`core/`等
     -   初始化完成后，脚手架需要立即写入关键信息
         -   职责，写入到xx文档
         -   能力，写入到xx文档
     -   初始化完成后，脚手架会将进行模块实例注册
-        -   1111
-        -   2222
-    
+        -   模块注册：`modules//registry.yaml`
+        -   模块关系图：`doc_agent/module-types/type_graph.yaml`
+      
 -   **概念共识**：原方案中提到了和模块相关的三个概念：层级、类型、实例，但这些概念的定位和承担的职责并未明确。经讨论达成共识：
     -   模块有 module_level（层级）、module_type（类型）、module_id（实例）
     -   模块层级是模块实例的组成/包含关系，构成从属关系树，层级和类型是解耦的
@@ -256,7 +267,7 @@
         -   层级树用来表达“谁属于谁”的业务分解，不干预类型/能力注册
     -   模块类型是用于关系维护的，只在脚手架/文档里用，不在能力路由和编排决策等执行路径中当主语
         -   在doc_agent/module-types/TYPE_GRAPH.yaml中维护
-        -   模块类型可以组成图结构，该结构用来描述业务流和数据流（类型间的调用/依赖关系），相同类型的模块具有相同的接口
+        -   模块类型可以组成图结构，该结构用来描述业务流和数据流（类型间的调用/依赖关系），同类型模块的链接接口相同
         -   类型图是设计层 SSOT，但只当蓝图，不直接用来调度
         -   帮AI理解“整个系统大概怎么分块、怎么串联”，在新实例初始化中给MANIFEST做校验
     -   模块实例是面向业务的，是实际开发（运行、编排、CI、Guardrail等）的唯一载体
