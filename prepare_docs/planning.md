@@ -31,7 +31,7 @@
 - 脚本
 - YAML / front matter  （引入模式文件）
   - AI可读文档准备前置元数据模式
-  - 
+  - content_route
 
 ### 基础功能开发
 
