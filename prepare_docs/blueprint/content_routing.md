@@ -1,123 +1,459 @@
+# Knowledge Routing
 
-# 知识路由
+This document defines the **knowledge routing** system used to help an AI development assistant reliably find and load the right documentation during task execution.
 
-为了减少AI在检索文档的不确定性，提高获取知识的效率和密度。我们构建了多级文档路由系统，旨在提高任务规划的效率和可靠性，给予AI明确的指导至相关信息。知识路由的两个主要目标有两个：
+The goals are:
 
-- 将适当的知识告知代码大模型：给AI的知识既要准确，同时也要精简。
-- 路径引导符合大模型的工作模式：要发挥AI的任务编排体系的灵活性。
+- **Reduce uncertainty when the AI retrieves documents**, and increase the efficiency and density of useful knowledge.
+- **Align the access path with the AI’s orchestration model**, so that routing naturally supports multi‑step task planning and execution.
 
-为达成上述两个目标，文档路由采用三层结构：范围 → 主题 → 时机。对于每个组合，路由条目将指定目标文档，即AI应在该情况下加载的实际文档链接。这类似于图书馆的目录表索引：告诉AI应该查阅图书馆的哪个部分找哪些书以获取所需知识。
+To achieve this, we introduce a **multi‑level routing structure**:
 
-我们将路由条目和目标文档视为两类文档：`路由文档`和`知识文档`，前者通过三层结构帮助AI高效检索，后者则包含了上下文的具体内容。我们建立了一套基础设施，知识路由，用于规范和管理项目中的路由文档和知识文档。
+- **Top‑level routing (scopes)** – high‑level entry points for retrieval.
+- **Topic‑level routing (topics)** – problem families within a scope.
+- **Concrete documents (knowledge docs)** – actual content that is loaded into context.
 
-## 基本规则
-由于路由文档和知识文档承担的职责完全不同，下面我们来分开定义两类文档的规范。
+We treat **routing artefacts** and **knowledge documents** as two distinct types:
 
-### 路由文档
-- 命名规范：路由文档的文档名称必须为`ROUTING.md`
-- 内容规范：文档必须要包含路由，路由形式示例：
+- **Routing documents** – `ROUTING.md` and topic route files under `/routes`, which provide natural‑language navigation and references.
+- **Knowledge documents** – the actual content files (Markdown or other formats) that hold the detailed context.
+
+Routing documents are optimized for **AI navigation and selection**, while knowledge documents are optimized for **explanatory content**.
+
+---
+
+## 1. Concepts and Basic Rules
+
+Knowledge routing is designed for an **AI orchestration system** where the AI is the primary actor: it receives a high‑level request (“implement feature X”) and independently decides which routes and documents to follow.
+
+### 1.1 Orchestration stages
+
+For reasoning and retrieval, we conceptually divide the AI’s work into four stages:
+
+- `understand` – understand the problem / background / concepts
+- `plan` – decompose the task / design steps / plan an approach
+- `act` – perform concrete actions (write code, change config, run scripts, etc.)
+- `review` – check / evaluate / summarize / reflect
+
+> Important:  
+> Authors **do not** need to bind a document to a stage while writing it.  
+> Stage tags are added later in routing files, as **usage hints** for when a document is most helpful.
+
+### 1.2 Key terms
+
+We use the following core terms:
+
+| Term           | Meaning                                                                                             |
+|----------------|-----------------------------------------------------------------------------------------------------|
+| **scope**      | Lightweight retrieval entry point (a high‑level area); points to one or more topic route files.    |
+| **topic**      | Short label representing a **problem family** within a scope.                                       |
+| **route**      | A scenario within a topic; describes **when to use** a group of related documents.                  |
+| **related_doc**| A reference to an actual knowledge document, with a path and usage hints (stage, doc_usage, etc.). |
+
+Because routing documents and knowledge documents have distinct responsibilities, their formats are defined separately.
+
+---
+
+## 1.3 Routing documents
+
+There are two main types of routing documents:
+
+1. **Top‑level routing document**: `ROUTING.md`
+2. **Topic route files**: YAML files under `/routes/…`
+
+#### 1.3.1 Top‑level routing (`ROUTING.md`)
+
+- **File name:** The entry routing document must be named `ROUTING.md`.
+- **Purpose:** Acts as the **AI’s entrypoint** to the knowledge routing system. It contains a concise index of `scope` + `topic`, and tells the AI:
+  - Which topics exist.
+  - Where the corresponding topic route files are.
+  - Roughly what each topic is about.
+
+Example:
+
 ```yaml
-context_routes:
-  - scope: Execution – Quality Gates
-    topics:
-      - name: Pre-commit Checks
-        when:
-          - description: preparing to run make dev_check
-            target_docs:
-              - path: /doc_agent/quickstart/quality-quickstart.md
-              - path: /scripts/README.md
+route_indexes:
+  - scope: execution.quality_gates
+    topic: pre_commit_checks
+    summary: >
+      All routes related to pre‑commit checks and quality gates.
+      Load this topic when you need to understand or handle pre‑commit checks.
+    route_file: /routes/execution.quality_gates.pre_commit_checks.yaml
+
+  - scope: frontend
+    topic: bug_triage
+    summary: >
+      Topic routes for frontend bug triage – from understanding a bug report,
+      to narrowing down the root cause and verifying the fix.
+    route_file: /routes/frontend.bug_triage.yaml
 ```
-- 分层指南：知识路由按照领域（scope）、主题（topic）、情形（when），将AI任务编排所需的上下文映射到分层体系中，以保障AI指导对于任何软定义的任务应该加载哪些上下文。  
-  - scope：生命周期或工作场景，描述路由节点覆盖的"责任域"或"工作阶段"，与任务编排保持顶层一致性
-  - topic：具体职责或能力单元，聚焦"要处理什么类型的问题/任务"。topic将广义责任域进一步拆分成可路由的能力单元
-  - when：在什么情境下需要加载"这一组文档/资源"；一句话说明场景与目标，让智能体根据具体需求匹配合适的文档集合
-  - path：目标文档的路径；同一套路由可以包含一个或多个目标文档，但不允许存在空路径
 
-- 路由规范：完整的路由包含三个层级和至少一个目标路径，实际使用中我们并不要每个路由文档都使用完整的层级结构
-  - 目标路径：可以为知识文档，也可以为其他路由文档
-  - 层级结构：
+`ROUTING.md` may also include prose sections to explain how routing is organized, but the `route_indexes` block is the part AI relies on programmatically.
 
-- 前置元数据：按照规范，所有面向AI阅读的文档
-  - purpose 应该与topic对齐（topic字面应该包含purpose的一个或多个关键词）？？？？？？？
-  - 3
-  - 4
+#### 1.3.2 Topic route files (`/routes/*.yaml`)
 
-### 知识文档
+Each topic route file focuses on **a single topic within a scope**.
 
-- 命名规范：无强制命名要求，仅需要满足模板统一的文档命名规范
-- 前置元数据：
-  - 1
-  - 2
-  - 3
+- **Location:** Any path under `/routes`, referenced by `route_indexes.route_file`.
+- **Front matter:** We use a small YAML front matter header to declare the scope and topic:
 
-- 内容规范：除了要易于AI阅读外，文档内容还需要满足渐进式原则，即如果内容可以被明确区分，选用下列两种做法精简所需加载的上下文：
-  1. 将文档拆分成多个文档，分别提供前置元数据；该做法需要重新注册文档，以确保路由正常
-  2. 将内容分为多个章节，并在文档开头提供明确的段落索引；
+```yaml
+---
+scope: execution.quality_gates
+topic: pre_commit_checks
+---
+```
 
+- **Body structure:** The body defines a list of `routes`.  
+  Each route contains:
 
-- 常见的知识文档类型
-  - 1
-  - 2
-  - 3
+  - `when_to_use` – natural‑language description of **when this route is appropriate**.
+  - `related_docs` – list of document references; each entry contains:
+    - `path` – relative or absolute path to the knowledge document (required).
+    - `stage` – optional array of orchestration stages where this doc is especially relevant.
+    - `doc_usage` – natural‑language description of how/why to use this doc in the route.
 
-### 其他文档
+Example:
 
-知识路由仅需要包含上述两种类型的文档，其他任何文档都不应该被包含在知识路由中。我们对典型的文档类型进行梳理。
-- 能力路由文档：这类文档统一命名为`ABILITY.md`，用于帮助AI找到合适的工具；详见<ability_routing.md>文档
-- 策略和规则文档：这类文档是面向`AGENTS.md`的，用于规范AI的运行策略；详见<instruction_ai.md>文档
-- 上下文相关文档：这类文档用于记录AI的思考过程和工作成果，其维护职责和文档使用都归属于模块实例；详见<modulate.md>中的相关内容
-- 格式规范文档：这类文档并不会直接提供任务编排所需知识，但可能会提供执行所需信息（例如写入操作）。理想情况下，规范格式的相关操作应被包装成能力，AI可以直接调用能力完成写入/获取正确格式。
-- 面向人类的文档：除特殊情况外，这类文档的内容不应该被AI阅读
-
-不论如何，所有的文档都需要按照规范填写前置元数据，按照策略规范，AI将会检查元数据内容，以保证路由链路的准确，并最终按照需求加载知识上下文。
+```yaml
+---
+scope: execution.quality_gates
+topic: pre_commit_checks
 ---
 
-## 路由维护
+routes:
 
+  - when_to_use: >
+      Use this route when you are dealing with questions about "pre‑commit checks
+      / quality gates", including understanding the concept or confirming rules
+      before running the checks.
+    related_docs:
+      - path: /quality/policies/global1.md
+        stage: [understand, act]
+        doc_usage: >
+          Primary alignment document (read first). Establishes the overall
+          concept of quality gates and pre‑commit checks and explains their role
+          in the delivery process for this project.
 
-### 新增
-项目开发过程中，以下情况都需要进行文档注册：
-- 添加了新的知识文档
-- 添加了新的路由文档
-- 对已有的知识文档进行了拆分
+      - path: /quality/policies/global2.md
+        stage: [understand]
+        doc_usage: >
+          Optional supplementary alignment document. Provides more detailed
+          organization‑wide quality policies, used when stricter or more
+          fine‑grained standards are needed.
 
-**任何情况下**，不要手动完成知识文档的注册。模板将提供一个新增脚本，以确保知识路由的可用性。你可以通过以下方式调用注册脚手架：
-- 直接运行知识路由的注册脚本
-- 告诉AI你希望注册一个新的知识文档
+  - when_to_use: >
+      Use this route when you already understand the idea of quality gates and
+      are preparing to actually run pre‑commit checks (for example `make dev_check`)
+      on your local machine.
+    related_docs:
+      - path: /doc_agent/quickstart/quality-quickstart.md
+        stage: [plan]
+        doc_usage: >
+          Workflow‑style quickstart. Guides you through running `make dev_check`
+          locally and explains the key checks at a high level.
 
-### 删除
-项目开发过程中，以下情况需要进行文档删除：
-- 需要删除某个知识/路由文档
-- 当某个知识文档的职责发生了变化（影响scope/topic/when），先删除再新增（需要重新定义路由条目）
+      - path: /scripts/README.md
+        stage: [act]
+        doc_usage: >
+          Skill/operations document. Describes available scripts and their flags,
+          and is used during execution and troubleshooting of pre‑commit checks.
+```
 
-**不要仅仅删除文件**，请调用模板提供的删除脚本，避免出现路由路径不可用的情况。你可以通过以下方式进行知识路由相关文档的删除：
-- 直接运行知识文档删除脚本
-- 告诉AI你希望删除一个知识/路由文档
+**Semantics of `stage` on `related_docs`:**
 
-### 触发机制
+- `stage` is **optional**.
+- If `stage` is provided, the document is primarily intended for those stages.
+- If `stage` is omitted, the document is considered usable at **any stage**.
+- AI should **prefer** documents whose `stage` includes the current stage but may fall back to generic (no `stage`) docs if needed.
 
+**Semantics of `when_to_use` vs. `doc_usage`:**
 
-- CI集成：模板提供持续集成检验，定期检验文档是否包含了前置元数据、知识路由相关的文档是否符合规范、以及项目路由体系是否链路完整
+- `when_to_use` – describes **the scenario for the route as a whole**  
+  (“when you are doing X, consider this group of documents”).
+- `doc_usage` – describes **the role of an individual document**  
+  (“this is the primary alignment doc”, “this is an optional example”, etc.).
 
-### 模块化维护
-
-### 三层结构规范
-- scope：
-- topic：
-- when：
 ---
 
+## 1.4 Knowledge documents
 
+Knowledge documents are the actual content files (usually Markdown) that the AI will eventually load into context.
 
- - 跨文档交叉检验，每个文档都应该有front matter, purpose 应该与topic对齐（topic字面应该包含 doc purpose 的（某个或多个）关键词），如果leaf文档更新purpose， 则需要触发相应路由进行调整
-  - 鼓励在 when 中引用命令或触发事件，而不仅是抽象描述，如 when: "Before running database migration scripts"。
-  - 变更流程管控，路由/Agent 变更必须附带 checklist：更新文档、运行 lint、同步可视化表格、在 workdoc 中标记。
-  - 在根级README中维护一个路由文档表，新增的面向AI的文档需要在README中注册登记，避免存在孤岛；同时在 `doc_agent/orchestration/doc-node-map.yaml` 中登记 `ROUTING.md` topic/when 与 `AGENTS.md`、`CAPABILITIES.md` 中 `graph_node_id`、`capability_tags` 的映射，方便 lint。
-  - 统一抽象层级，维护一个文档（always read），用于定义标准 scope 范畴（比如生命周期、治理域、资产域），要求所有 `ROUTING.md` 明确继承或声明等价 scope，避免各自随意命名；相邻的 `AGENTS.md` 与 `CAPABILITIES.md` 仅引用这些 scope，不可自建新称谓。
-  - 结构化约束 Topic/When，限定字段必填、值域、长度、关键词等，用关键词表（如 schema change、guardrail update、pre-commit）限制取词，减少同义词混乱。编写 when 时，要聚焦"识别条件 + 阅读目的"。
-  - 提供检验脚本，加入语义检验（例如 when 是否包含触发词、Topic 是否与下游 doc 的 purpose 匹配等）。当叶子文档的purpose变更时，需要运行脚本并检查对应的when是否仍然准确。
+- **Front matter:** Each knowledge document should use front matter to declare its metadata:
 
+```yaml
+---
+id: quality-quickstart
+doc_type: workflow        # one of: skill | workflow | example | alignment
+scope: execution.quality_gates
+topics:
+  - pre_commit_checks
+stages:
+  - plan                  # optional; hints where this doc is most useful
+summary: >
+  Quickstart for running `make dev_check` locally and understanding the main
+  checks involved in the quality gate.
+---
+Body of the document...
+```
 
-  更新根 README 表时，同步检查子目录缩略表是否需要变更。
-	- 子目录也可以按照上述规则维护局部缩略表（大部分不需要scope）。这些表格在更新路由时（维护SOP）需要同步更新，形成流程约束，更新方式需要在维护SOP文档（或下沉文档）中说明。
-	- 可以维护一个编写指南（含标准命名、正反例、共享 topic 的处理方式），在新目录或模块接入时引用，保证结构演进的一致性。
+- **`doc_type` is a soft classification**, not a hard rule. Typical values:
+
+  - `skill` – domain‑specific tips, patterns, and recipes.
+  - `workflow` – task orchestration playbooks, step‑by‑step flows.
+  - `example` – concrete examples to use as few‑shot prompts.
+  - `alignment` – goals, principles, evaluation criteria, and constraints.
+
+  The AI (or tools around it) may use `doc_type` as a **soft filter**, for example:
+
+  - In `plan`: prefer `workflow` and `alignment`.
+  - In `act`: prefer `skill` and `example`.
+  - In `review`: prefer `alignment` and `skill`.
+
+- **Content structure:**  
+  To minimize context size and improve retrieval:
+
+  1. Split large documents into multiple smaller docs when they serve distinct purposes, each with its own front matter.
+  2. If splitting is not appropriate, structure content into clear sections and provide a brief section index at the top.
+
+---
+
+## 1.5 Documents that are *not* part of knowledge routing
+
+Knowledge routing only covers routing documents and knowledge documents as defined above. Other documentation types should generally **not** appear in the knowledge routing graph.
+
+Typical non‑routing document types include:
+
+- **Ability routing documents**  
+  - Named `ABILITY.md`.  
+  - Help the AI discover available tools / capabilities to call.  
+  - See `ability_routing.md` (not covered here).
+
+- **Strategy / policy documents for agents**  
+  - Often referenced from `AGENTS.md`.  
+  - Define how the AI should behave at a higher level (policies, safety rules, etc.).  
+  - See `instruction_ai.md`.
+
+- **Contextual / ephemeral documents**  
+  - Used to store intermediate reasoning and results of specific task runs.  
+  - Scoped to a module instance or a single workflow run.  
+  - See `modulate.md` for details.
+
+- **Format / schema specification documents**  
+  - Describe how to format outputs or write to external systems.  
+  - Ideally, the operations implied by these docs are wrapped as tools so that the AI can call a capability instead of loading the spec into context.
+
+- **Human‑only documentation**  
+  - Purely for human consumption (e.g., HR manuals).  
+  - Unless explicitly whitelisted, they should not be pulled into AI context via knowledge routing.
+
+---
+
+## 2. Retrieval Process
+
+### 2.1 Logical flow
+
+All documents that participate in knowledge routing must provide **front matter metadata** that conforms to this specification.
+
+During knowledge retrieval, the AI follows a typical strategy like this:
+
+1. **Interpret the request and stage**  
+   - From the user’s request and recent conversation, infer:
+     - The current **stage** (`understand`, `plan`, `act`, or `review`).
+     - The approximate **scope** (e.g., `execution.quality_gates`, `frontend`).
+
+2. **Select relevant topics from `ROUTING.md`**  
+   - Load `ROUTING.md` and read `route_indexes`.  
+   - Filter candidates by `scope`.  
+   - Use semantic similarity between the request and each `route_indexes.summary` to pick one or a few relevant topics.
+
+3. **Load the corresponding topic route files**  
+   - For each selected entry, load the YAML file pointed to by `route_file`.  
+   - These files contain `routes` for the chosen `topic`.
+
+4. **Match routes via `when_to_use`**  
+   - Iterate over `routes` in the topic file.  
+   - Use the current task description and stage to semantically match against `when_to_use`.  
+   - Select the most relevant route(s).
+
+5. **Filter `related_docs` by stage**  
+   - Within each selected route:
+     - Prefer documents whose `stage` includes the current stage.
+     - Optionally include documents without `stage` (considered valid for all stages).
+
+6. **Use `doc_usage` (and optionally `doc_type`) to prioritize documents**  
+   - From each route’s `related_docs`, use `doc_usage` to decide:
+     - Which documents are **primary** and should be read first.
+     - Which documents are **supplementary** or **optional**.
+     - Which documents are **examples** (for few‑shot prompting).  
+   - `doc_type` can be used as an extra hint (e.g., prefer `alignment` during `review`).
+
+7. **Load a small, targeted subset of knowledge docs into context**  
+   - Do **not** load every document referenced in routing.  
+   - Instead, select a small set (e.g., 1–5 documents) that are most relevant to the current step and stage.
+
+This process balances:
+
+- The flexibility of natural‑language matching (`when_to_use` and `doc_usage`).
+- The precision of structured hints (`scope`, `topic`, `stage`, `doc_type`).
+
+### 2.2 Document location and layout
+
+To make routing predictable and discoverable, we recommend:
+
+- Place the **entry routing document** in a well‑known location, e.g.:
+
+  - `ROUTING.md` at the project root.
+
+- Store **topic route files** in a dedicated directory:
+
+  - `/routes/<scope>.<topic>.yaml`, for example:  
+    - `/routes/execution.quality_gates.pre_commit_checks.yaml`  
+    - `/routes/frontend.bug_triage.yaml`
+
+- Knowledge documents can live in any directory, as long as:
+
+  - Their `path` is stable and referenced correctly from `related_docs.path`.
+  - They provide front matter with at least `id`, `scope`, and a `summary`.
+
+Only documents that are part of knowledge routing should be referenced via `ROUTING.md` and `/routes/*.yaml`. Other documents remain outside the routing graph.
+
+---
+
+## 3. Implementation Notes
+
+### 3.1 Stage usage and responsibility
+
+The four orchestration stages (`understand`, `plan`, `act`, `review`) are conceptual tools for both the AI and routing authors.
+
+- **Document authors** focus on writing clear, durable content.  
+  They do **not** need to decide “this document is only for `plan`”.
+- **Routing authors** (often the same team, but a different mindset) decide:
+  - In which stages a document is **most useful**, and
+  - How that document should be grouped into routes (`when_to_use`).
+
+Guidelines:
+
+- Only add `stage` to `related_docs` when it actually helps disambiguate usage.
+- Leave `stage` empty if the document is broadly useful across stages.
+- Keep `when_to_use` phrasing broad enough that it still makes sense from multiple stages, unless the route is truly stage‑specific.
+
+---
+
+### 3.2 Maintenance
+
+To keep knowledge routing reliable and evolvable over time, combine **automated checks** with **periodic human review**.
+
+1. **CI validation (recommended)**  
+   A CI pipeline should periodically verify:
+
+   - **Metadata completeness**
+     - All knowledge documents include front matter with required fields (e.g., `id`, `scope`, `doc_type`, `summary`).
+     - All routing documents (`ROUTING.md` and `/routes/*.yaml`) conform to the structure defined in this README.
+
+   - **Routing consistency**
+     - Each `route_indexes.route_file` exists and is readable.
+     - Each `related_docs.path` points to an existing knowledge document.
+     - Optionally, detect:
+       - “Orphan documents” (knowledge docs that are never referenced by any route).
+       - “Broken routes” (routes that only reference missing or deprecated docs).
+
+   - **Stage integrity (optional)**
+     - All `stage` values are within the allowed set (`understand`, `plan`, `act`, `review`).
+     - For critical topics, ensure that key stages (e.g., `act`) have at least one usable route.
+
+   CI should **block merges** when routing is inconsistent, and provide clear error messages to help developers quickly fix issues.
+
+2. **Local validation (recommended)**  
+   To avoid CI back‑and‑forth, provide local tooling such as:
+
+   - `content-routing lint` – validate routing structure and document metadata on the current branch.
+   - `content-routing graph` – generate a graph view showing which routes reference which documents.
+
+   Developers are encouraged to run these commands locally after editing routing or knowledge docs.
+
+3. **Periodic review and evolution (as needed)**  
+   Over time, some routes and docs may become stale, overlap, or diverge from reality. Recommended practices:
+
+   - Assign owners to scopes/topics who periodically (e.g., once per iteration or month) review:
+     - Whether `when_to_use` descriptions still match how the system is used.
+     - Whether some documents are overloaded and should be split.
+     - Whether new, frequently occurring scenarios should gain their own routes or topics.
+
+   - For larger changes (topic splits, scope redesign), use a design/RFC process so the team understands and agrees with routing changes.
+
+The goal is to keep the routing graph **accurate, discoverable, and trustworthy** as the codebase and processes evolve.
+
+---
+
+### 3.3 Trigger mechanism
+
+The knowledge routing system – especially routing documents – primarily relies on the AI’s ability to **perform semantic matching** at runtime:
+
+- It reads `ROUTING.md`, topic route files, and front matter.
+- It compares the current task description with `when_to_use` and `doc_usage`.
+- It chooses routes and documents accordingly.
+
+On top of this, we can add a **trigger mechanism** as an *optional enhancement* to provide more structured hints into the routing process.
+
+#### 3.3.1 Trigger inputs
+
+Triggers may listen to various signals, such as:
+
+- **User inputs**  
+  - CLI commands, chat messages, form submissions.
+- **System events**  
+  - CI status changes, monitoring alerts, log patterns.
+- **AI internal steps**  
+  - Intermediate intentions generated by other agents or planning components.
+
+#### 3.3.2 Structured intent format
+
+When a trigger recognizes a potential need to consult knowledge routing, it can emit a **structured intent** for the AI or orchestrator to consume, for example:
+
+```json
+{
+  "scope": "execution.quality_gates",
+  "topic": "pre_commit_checks",
+  "stage": "plan",
+  "intent": "ensure_code_quality_before_commit",
+  "signals": {
+    "cli_command": "make dev_check",
+    "user_raw_input": "I want to run a pre-commit check"
+  }
+}
+```
+
+- `scope` / `topic`  
+  - May be set by the trigger if it can confidently infer them.  
+  - Otherwise they can be left empty and inferred via semantic matching in routing.
+
+- `stage`  
+  - Optional hint about the current orchestration stage.
+
+- `intent`  
+  - Optional high‑level summary of what the user / system is trying to achieve.
+
+- `signals`  
+  - Raw evidence that led to this intent (e.g., the exact CLI command or user phrase).
+
+#### 3.3.3 Interaction with knowledge routing
+
+The structured intent **does not replace** natural‑language matching; it acts as a **constraint and hint** for routing:
+
+1. Use `scope` / `topic` (if present) to filter `route_indexes` and select one or a few topic route files.
+2. Within those topic files:
+   - Optionally use `stage` to prioritize `related_docs` with matching `stage`.
+   - Use `intent` and `signals.user_raw_input` to semantically match against `when_to_use`.
+3. Finally, still rely on natural‑language understanding of `when_to_use` and `doc_usage` to pick the most appropriate documents.
+
+#### 3.3.4 Design principles
+
+- Triggers are **optional**. Routing must still work with only natural‑language matching.
+- The structured intent schema should stay **small and stable**, so multiple entrypoints (CLI, web UI, agents) can reuse it.
+- Triggers should **not** implement business logic. Their job is to transform messy inputs into structured hints; the actual decision of which routes/docs to load remains with the AI and routing rules.
+
+By combining semantic matching with lightweight triggers, the routing system can offer both **flexibility** and **robustness** in complex projects.
+
+---

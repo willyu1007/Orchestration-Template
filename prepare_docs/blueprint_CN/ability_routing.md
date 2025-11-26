@@ -5,12 +5,15 @@
 - 低层能力：细粒度的操作，如运行脚本或调用API。通常代表原子操作，允许由多个实现。
 - 高层能力：由低层步骤组成的高级任务或工作流，会优先暴露给编排器进行规划。
 
+通过分离低级和高级，我们实现了模块化——低级方法可以交换或重用，高级工作流封装业务逻辑。由于能力路由体系的入口和作用对象都是模块实例，为更好的理解其作为基础设施的的功能和使用方式，强烈建议阅读<modulate.md>文档中的4.2章节"能力路由的协同"。
 
-
-通过分离低级和高级，我们实现了模块化——低级方法可以交换或重用，高级工作流封装业务逻辑。这防止编排器被细节淹没（它只"看到"高级图），并简化了策略执行（防护栏主要附加到高级能力，而不是每个原子操作）。命名约定（base.* vs able.*）和层级字段明确编码了这种分离，减少了歧义。引入成熟度级别对于安全的 AI 协同开发至关重要：它为新能力创建了一个暂存区，确保只有经过验证的函数成为核心执行集的一部分。注册表工具和模式验证旨在缓解在复杂的引用网络（ID、依赖、触发器、所有者等）中可能出现的错误。在设计讨论期间，团队确定管理不善这些关系可能导致编排错误或安全漏洞，因此强调统一配置模式和这些关系的自动化。严格的注册表还意味着 AI 和开发人员可以查询单一来源（YAML 或 ABILITY.md）以发现可用能力及其用法，提高透明度和重用性。
 
 低层能力和高层能力都需要进行注册（模板会提供能力相关的注册和修改脚手架，以保证格式的规范）。能力的注册信息会存入统一的文件路径（区分低层和高层），能力实现也会统一存放。
 每个模块实例通畅会维护自身的高层能力路由，项目会额外维护一份路由作为入口，这些路由文档命名统一为`ABILITY.md`。所有的`ABILITY.md`只提供文件路径和使用情况说明。注册机制和所有的`ABILITY.md`文档共同组成了能力路由。
+
+
+在阅读后续内容前，强烈建议阅读并理解下述名词或概念：
+
 
 - low tier 包含"script"、"mcp"、"api"三种类型。前者为repo内部实现的脚本，后两者为mcp/API等外部服务  
     - high tier 包含"workflow" 和 "agent" 两种类型。前者是更偏确定性的pipeline ，主要拼装repo内脚本；后者更偏动态驱动，会综合内外部能力
@@ -76,20 +79,107 @@
 
 ## 编排过程
 
-- 模块实例的功能开发
+### 模块实例的功能开发
   1. 阅读模块实例目录下的`ABILITY.md`；
   2. 查看`ABILITY.md`允许使用的高层能力以及**应用情景**说明；
      - 如发现有可以使用的高层能力，依据路由跳转至能力注册文档，检验是否要求、输入、输出等是否满足条件。如满足条件直接调用，如不满足退回`ABILITY.md`继续查询（高层能力有`maturity`字段，优先调用字段为`stable`的能力）
      - 如没有可以使用的高层能力，进入步骤三
-  3. 检索`ABILITY.md`包含的低层能力以及**功能描述**，决定是否调用；
+  3. 检索`ABILITY.md`包含的低层能力以及**功能描述**，决定是否调用
+     - 如由可以调用的
   4. 将选择能力的决策过程记录到工作上下文（`workdocs/active/<task>/details.md`）中
      - 如调用了高层能力，记录调用原因、能力`name`和`maturity`，以及执行结果
      - 如调用了低层能力，记录调用原因、能力`name`、以及执行结果。 
-- 多个模块示例的联调
+
+### 多个模块实例的联调
 
 ---
 
 ## 注册和维护
+
+我们先带入项目开发的视角，梳理不同类型能力的生命周期
+
+
+
+注册表工具和模式验证旨在缓解在复杂的引用网络（ID、依赖、触发器、所有者等）中可能出现的错误。在设计讨论期间，团队确定管理不善这些关系可能导致编排错误或安全漏洞，因此强调统一配置模式和这些关系的自动化。严格的注册表还意味着 AI 和开发人员可以查询单一来源（YAML 或 ABILITY.md）以发现可用能力及其用法，提高透明度和重用性。
+
+- 低层能力的典型产生过程：
+  1. 1
+  2. 2
+  3. 3
+
+
+- 面向AI的抽象高层能力进入能力路由的典型过程：
+  1. 1
+  2. 2
+  3. 3
+
+
+
+    - high tier 使用 "ability_registry"进行注册，low tier 使用 "method_registry"进行注册，
+    - low tier 使用 "method_registry “进行注册，以业务动作为主键，同一业务动作允许多种实现。
+    - low tier的命名方式使用 `base.<domain>.<action>`, 参考格式：
+    ``` yaml
+    - id: base.db.migrate
+    tier: low
+    kind: script       
+    script: scripts/db/migrate.py:main
+    inputs: ...
+    outputs: ...
+    owner: ...
+    tags: [db, migration]
+
+    - id: base.db.query
+    tier: low
+    kind: mcp
+    mcp_server: cloud-db
+    mcp_tool: query
+    inputs: ...
+    outputs: ...
+    owner: ...
+    tags: [db, external]
+
+    - id: base.db.call
+    tier: low
+    kind: api
+    api_server: QWEN
+    api_key: ...
+    inputs: ...
+    outputs: ...
+    owner: ...
+    tags: [llm, external]
+
+    ```
+    - high tier的命名方方式： `able.<domain>.<intent>`, 参考格式：
+    ``` yaml
+    - id: able.db.apply_all_migrations
+    tier: high
+    kind: workflow
+    domain: db
+    intent: apply_all_migrations
+    steps:
+        - base.db.migrate
+        - base.db.check_health
+    depends_on:
+        - base.db.migrate
+        - base.db.check_health
+    owner: ...
+    maturity: candidate
+
+    - id: able.repo.maintenance_assistant
+    tier: high
+    kind: agent
+    domain: repo
+    intent: maintenance_assistant
+    can_call:
+        - base.db.query
+        - base.db.migrate
+        - base.fs.read_file
+        - base.mcp.*         # 某些 mcp 能力
+    owner: ...
+    maturity: experimental
+    ```    
+
+   
 
 不论是是哪个层级哪种类型的能力，进入能力路由时都需要进行注册。注册表工具和模式验证旨在缓解在复杂的引用网络（ID、依赖、触发器、所有者等）中可能出现的错误
 

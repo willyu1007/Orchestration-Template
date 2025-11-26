@@ -20,6 +20,30 @@
 
 
 
+文档的front matter
+``` yaml
+id: fe-layout-skill-001
+audience:
+doc_type: skill              # skill / workflow / example / alignment
+scope: frontend/layout       # 可做成层级：frontend/layout/flex
+intents:                     # 支持多个意图
+  - fix-flex-overflow
+  - fix-horizontal-scroll
+stages:                      # 在编排中的适用阶段
+  - act
+  - review
+triggers:                    # 可选：用于运行时匹配条件
+  - on-error
+  - on-user-complain
+attach_to:                   # 可选：绑定到某工作流/节点
+  - workflow.frontend-bug-triage.plan
+tags:                        # 任意补充标签
+  - css
+  - flexbox
+  - layout
+summary: >
+  指导如何排查和修复 flex 布局导致的超出和滚动问题。
+```
 
 
 
@@ -40,6 +64,15 @@
 
 ---
 
+React (18+)
+MUI v7
+TanStack Query
+TanStack Router
+TypeScript
 
+Node.js/Express
+TypeScript
+Prisma ORM
+Sentry
 
 
