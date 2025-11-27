@@ -255,7 +255,6 @@ Typical non‑routing document types include:
 ### 2.1 Logical flow
 
 All documents that participate in knowledge routing must provide **front matter metadata** that conforms to this specification.
-
 During knowledge retrieval, the AI follows a typical strategy like this:
 
 1. **Interpret the request and stage**  
@@ -294,9 +293,48 @@ During knowledge retrieval, the AI follows a typical strategy like this:
    - Instead, select a small set (e.g., 1–5 documents) that are most relevant to the current step and stage.
 
 This process balances:
-
 - The flexibility of natural‑language matching (`when_to_use` and `doc_usage`).
 - The precision of structured hints (`scope`, `topic`, `stage`, `doc_type`).
+
+### 2.2 Document location and layout
+
+In practice, development is organized around **module instances**.  Each module instance has its own dedicated directory, and knowledge routing is scoped to that instance. To make routing predictable and discoverable in this model, we recommend:
+
+- **Treat each module instance’s directory as the routing root**
+
+  For example:
+  ```text
+  /modules/<instance-id>/
+    ROUTING.md
+    /routes/
+      execution.quality_gates.pre_commit_checks.yaml
+      frontend.bug_triage.yaml
+  ```
+
+  - `ROUTING.md` lives at the root of the module instance, not necessarily at the repository root.
+  - `/routes` contains topic route files referenced via route_indexes.route_file in that instance’s ROUTING.md.
+
+- **Centralize knowledge documents by `scope` + `doc_type`**
+ 
+  It is often clearer to organize knowledge documents under a shared tree such as "/knowledge/<scope>/<doc_type>/..." 
+  For example:
+  ```
+  /knowledge/frontend/skill/...
+  /knowledge/frontend/workflow/...
+  /knowledge/execution.quality_gates/alignment/...
+  ```
+  Each module instance can either:
+  - Keep its own /knowledge subtree under /modules/<instance-id>/knowledge, or
+  - Reuse a shared /knowledge root at the repository level, as long as related_docs.path is stable and resolvable.
+
+- **Only documents that participate in knowledge routing need to be referenced**
+  As before, only documents that are part of knowledge routing should be referenced via:
+  - ROUTING.md → route_indexes
+  - /routes/*.yaml → routes[*].related_docs.path
+  
+  Other documents remain outside the routing graph and are ignored by routing tools.
+
+---
 
 ### 2.2 Document location and layout
 
@@ -323,21 +361,43 @@ Only documents that are part of knowledge routing should be referenced via `ROUT
 
 ## 3. Implementation Notes
 
-### 3.1 Stage usage and responsibility
+### 3.1 Stage usage, responsibility, and tooling
 
-The four orchestration stages (`understand`, `plan`, `act`, `review`) are conceptual tools for both the AI and routing authors.
+The four orchestration stages (`understand`, `plan`, `act`, `review`) are conceptual tools for both the AI and routing maintainers.
 
 - **Document authors** focus on writing clear, durable content.  
   They do **not** need to decide “this document is only for `plan`”.
-- **Routing authors** (often the same team, but a different mindset) decide:
+- **Routing maintainers** (often the same team, but in a different role) decide:
   - In which stages a document is **most useful**, and
-  - How that document should be grouped into routes (`when_to_use`).
+  - How that document should be grouped into routes (`when_to_use` and `related_docs`).
 
 Guidelines:
 
 - Only add `stage` to `related_docs` when it actually helps disambiguate usage.
 - Leave `stage` empty if the document is broadly useful across stages.
-- Keep `when_to_use` phrasing broad enough that it still makes sense from multiple stages, unless the route is truly stage‑specific.
+- Keep `when_to_use` phrasing broad enough that it still makes sense from multiple stages, unless the route is truly stage-specific.
+
+**Registration and CLI tooling**：
+In day-to-day work, routing should not rely on manual YAML editing alone. We recommend providing **scaffolding / CLI tools** to register and deregister both knowledge documents and routing entries. Typical workflows are as follows:
+
+- **Registering a new knowledge document**
+ 1. Author creates a new knowledge document under the module instance’s `/knowledge` tree  
+ 2. Run the provided CLI command or have AI ​​register the added document:
+ 3. Through interaction with user, the tool will:
+    - Validate the document’s front matter (e.g. `id`, `scope`, `doc_type`, `summary`).
+    - Prompt for or infer: `scope` / `topic` 、intended `stage`(s) (if any)、 which topic route file(s) under `/routes` should reference this doc
+    - Update the corresponding `/routes/*.yaml` file(s) by adding a new `related_docs` entry under an existing route or optionally scaffolding a new route with a `when_to_use` stub.
+
+- **Deleting or renaming a knowledge document**
+1. Use the provided CLI or have AI delete the doc:
+2. The tool should:
+    - Remove or update all `related_docs.path` entries that reference this file.
+    - Optionally warn if a route becomes effectively empty (no remaining usable `related_docs`).
+3. CI can then enforce that:
+   - No `related_docs.path` points to a missing file.
+   - No topic route file references non-existent documents.
+
+By combining clear stage semantics with tooling-based registration/removal, the routing graph remains both **semantically meaningful for the AI** and **operationally manageable for developers**.
 
 ---
 
