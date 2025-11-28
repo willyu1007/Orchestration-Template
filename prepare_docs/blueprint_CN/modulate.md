@@ -48,7 +48,6 @@ module_instance/
 ├── routes/                # 实际路由文档
 ├── config/                # 配置文件   
 ├── {code}/                # 可能包括 `backend/`、`frontend/`、`core/
-├── outcomes/              # 配置文件    
 ├── interact/              # 实例的锲约、依赖、和影响（例如可能会改变数据库中某张表）     
 ├── docs/                  # 面向人类的文档（README、评估、observability等）       
 └── MANIFEST.yaml          # 模块的关键元数据
@@ -64,10 +63,6 @@ module_instance/
 - mock、 fixture 或其它数据
 - 其他
 
-### outcomes
-- 执行过程中开发的脚本
-- 其他
-
 ### workdocs
 每个模块实例都需要维护工作记录，用以记录AI在执行任务过程中的所思所想和所作所为。骨架结构形如
 ``` 
@@ -77,11 +72,13 @@ workdocs/
 │   ├── task-1/
 │   │   ├── task-1-plan.md      # 完成任务的计划
 │   │   ├── task-1-context.md   # 记录工作上下文
-│   │   ├── task-1-decision.md  # 记录工作中的决策
-│   │   ├── task-1-lesson.md    # 错误经验，避免再犯
 │   │   └── task-1-task.md      # 任务完成情况和进度   
 │   └── task-2/
 │       └── ...
+├── outcome/               # 工作产出
+│   ├── lessons.md         # 错误经验，避免再犯
+│   ├── decisions.md       # 重要决策
+│   └── scripts/           # 开发过程中新增的脚本
 └── archive/               # Completed work (optional)
     ├── summary/           # 陈旧内容
     ├── old_tasks/         # 已完成的任务
@@ -136,14 +133,7 @@ workdocs/
 我们先对`workdocs/`目录下的几个一目了然的文档和目录进行简要说明：
 - `/AGENTS.md`：面向AI的使用手册。文档中将包含上下文的更新规范、使用建议、阅读顺序、写入要求等内容，这里我们仅给出要点概述
 - `/archive/old_tasks/`：已完成任务归档后将存放在该目录下
-- `/archive/summary/`：对于开发流程很长的任务，上下文中的陈旧信息将按照一定规则，总结后放入该目录。根据总行数、更新次数、时间等条件触发清理
-
-接下来，我们将重点介绍  `workdocs/active/[task_name]/`目录。目录中包含五个主要的文档:`plan.md`、`context.md`、`decision.md`、`lesson.md`、以及`task.md`，这些文档使用的基本原则如下
-- **when to skip**: 没有难度的执行，如简单bug修复、细节修改、快速更新等
-- **when to use**: 当工作可能跨session时，如当完成了一个复杂任务、完整的功能、重大重构时
-- **update frequency**： 每次完成一个里程碑节点时，总结工作过程并更新文档
-- **keep plan current**：每当任务范围发生变化，需要更新计划、添加新的阶段、记录原因。
-- **make tasks actionable**：包含明确的文件名、清晰的验收标准、与其他任务的相关依赖等，eg: "Implement JWT token validation in AuthMiddleware.ts (Acceptance: Tokens validated, errors to Sentry)"
+- `/archive/summary/`：对于开发流程很长的任务，上下文中的陈旧信息将按照一定规则，总结后放入该目录。根据总行数、更新次数、时间等条件触发清理。
 
 前文提到我们需要帮助AI完成工作闭环，一个典型的工作流程包括：
 - 开始任务
@@ -152,14 +142,23 @@ workdocs/
   3. 检查计划是否合理，有没有考虑不周全的地方 
 - 实施期间
   1. 参考`plan.md`了解整体策略
-  2. 根据要求，定期更新`context.md`、`decision.md`、`lesson.md`文档
+  2. 根据要求，定期更新`context.md`、`decisions.md`、`lessons.md`文档
   3. 根据检验标准，在`task.md`中勾选已完成的阶段/指标
 - 上下文重置后
   1. AI重新读取`plan.md`、`context.md`、`task.md`
-  2. 快速了解完整的任务执行状态，根据需求读取`decision.md`、`lesson.md`
+  2. 快速了解完整的任务执行状态，根据需求读取`decisions.md`、`lessons.md`
   3. 从上次中断的地方继续运行
 
 ---
+
+**进行中的任务：workdocs/active**
+
+接下来，我们将重点介绍  `workdocs/active/[task_name]/`目录。目录中包含三个主要的文档:`plan.md`、`context.md`、以及`task.md`，这些文档使用的基本原则如下
+- **when to skip**: 没有难度的执行，如简单bug修复、细节修改、快速更新等
+- **when to use**: 当工作可能跨session时，如当完成了一个复杂任务、完整的功能、重大重构时
+- **update frequency**： 每次完成一个里程碑节点时，总结工作过程并更新文档
+- **keep plan current**：每当任务范围发生变化，需要更新计划、添加新的阶段、记录原因。
+- **make tasks actionable**：包含明确的文件名、清晰的验收标准、与其他任务的相关依赖等，eg: "Implement JWT token validation in AuthMiddleware.ts (Acceptance: Tokens validated, errors to Sentry)"
 
 #### **plan.md**
 
@@ -186,7 +185,7 @@ Where we are now
 ```
 ---
 
-#### context.md
+#### **context.md**
 
 AI需要将恢复上下文的会用的关键信息写入文档，内容主要包括：任务进度、已完成与进行中的内容、关键文件及其用途、相关文件链接、以及快速恢复说明。在做出重大决策、完成关键节点、或重要发现后，需要更新此文档。鼓励高频率的更新此文档，特别是每次完成重要工作时，一定要更新“任务进度”部分！
 
@@ -217,42 +216,9 @@ To continue:
 2. Continue implementing PostService.createPost()
 3. See tasks file for remaining work
 ```
-
 ---
-#### decision.md
 
-本文档用于记录AI执行过程的重要决定（如方案选择）、关键发现（如技术限制）、以及新增/删除文件（如新脚本、函数、接口等）。每条decision需要包含的条目包括
-
-**Example:**
-```markdown
-# Feature Name - Decision
-
-## DECISION-001 (2025-11-08)
-- type: file addition       # file deletion / decision / discovery
-- description： ...         # 决策是要做什么
-- reason：...               # 决策依据和逻辑
-- influence：file paths     # 影响哪些文件
-- implemented：completed    # wait approval / processing / completed 
-```
-
----
-#### lesson.md
-
-本文档用于记录AI执行过程中犯过的错误、造成的后果、相关教训、以及提醒。每条lesson信息需要包含完整的条目：带有上下文的描述、错误主要原因、造成后果、教训总结、以及提醒（可选）。
-
-**Example:**
-```markdown
-# Feature Name - Lessons
-
-## ERROR-001 (2025-11-08)
-- summary: When updating modules/payments/api/contract, forgetting to update CONTRACT.md caused interface inconsistencies
-- reason: Modified API but not updated CONTRACT.md
-- consequence: The front-end call failed, and the troubleshooting was repeated 3 times.
-- lesson: Any changes to the interface must be synchronized with doc/CONTRACT.md and contracts_baseline must be refreshed.
-- AI remind: Triggering the `contract-change` guardrail, executes `make contract_compat_check`.
-```
----
-#### tasks.md
+#### **tasks.md**
 
 本文档用于概述任务要求、以及通过清单管理的任务开发进度。
 
@@ -277,16 +243,65 @@ To continue:
 ...
 
 ```
+
 ---
 
-### 2.4 产出和交互
+**工作产出：workdocs/outcome**
 
-**交互**：
+相对于`active`目录外，`outcome`是上下文系统中另一个重要的目录。两者第一个显著的区别是：前者的作用域是单个任务，而后者是模块实例中的所有任务。
 
 
-**产出**：
+`decision.md`、`lesson.md`、
 实例功能逐渐完善的过程中，最主要的可复用的产出物是函数或脚本。这些脚本是功能路由（项目的重要基础设施，相当于AI的工具箱）的基石。
 我们在<ability_routing.md>文档中，详细解释了如何让AI复用脚本从而提高代码的一致性。这里，我们将专注叙述过程中产出脚本的维护规范。
+
+#### **decisions.md**
+
+本文档用于记录AI执行过程的重要决定（如方案选择）、关键发现（如技术限制）、以及新增/删除文件（如新脚本、函数、接口等）。每条decision需要包含的条目包括：类型、概述、依据、造成的影响
+
+**Example:**
+```markdown
+# Feature Name - Decision
+
+## DECISION-001 (2025-11-08)
+- type: file addition       # file deletion / decision / discovery
+- description： ...         # 决策是要做什么
+- reason：...               # 决策依据和逻辑
+- influence：add <file>     # 影响哪些文件
+- implemented：completed    # wait approval / processing / completed 
+```
+
+---
+#### **lessons.md**
+
+本文档用于记录AI执行过程中犯过的错误、造成的后果、相关教训、以及提醒。每条lesson信息需要包含完整的条目：带有上下文的描述、错误主要原因、造成后果、教训总结、以及提醒（可选）。
+
+**Example:**
+```markdown
+# Feature Name - Lessons
+
+## ERROR-001 (2025-11-08)
+- summary: When updating modules/payments/api/contract, forgetting to update CONTRACT.md caused interface inconsistencies
+- reason: Modified API but not updated CONTRACT.md
+- consequence: The front-end call failed, and the troubleshooting was repeated 3 times.
+- lesson: Any changes to the interface must be synchronized with doc/CONTRACT.md and contracts_baseline must be refreshed.
+- remind/solution : Triggering the `contract-change` guardrail, executes `make contract_compat_check`.
+```
+---
+
+
+### 2.4 交互
+
+**数据库**：
+- 新增或修改了表/表字段，需要在`interact/`目录下声明
+- 函数、流程、脚本等会新增/删除/修改数字的情况，需要在`interact/`目录下声明
+**测试**
+
+
+**协议**
+- 暴露给外部的公开接口，需要在``
+
+
 
 
 
@@ -362,6 +377,20 @@ SSOT
 所有的功能/知识/触发器，都需要挂在到具体的模块实例下
 ### 4.1 知识路由的协同
 
+我们将从应用和增强两个方面，分别讨论知识路由和模块实例开发的协同。
+
+**应用**
+模块实例可以直接应用**知识路由**体系（详见<content_routing.md>）。实例目录维护的 `ROUTING.md`文档以及 `routes`目录，两者的作用分别为：
+- **ROUTING.md**: 作为AI查询知识文档的入口，包含精简的scope/topic顶层索引，并给出每个topic对应的路由文件在哪里和大概是干什么的；
+- **routes 目录**：承接ROUTING.md的具体路由，使用`when_to_use` + `doc_usage`两层结构，每层级使用自然语言进行描述，最终指向知识文档地址
+
+**增强**
+我们可以通过以下几个渠道，总结开发过程中好的技巧和工作流程，充实项目的知识文档池
+- 归纳AI的工作过程：我们要求AI将做出的重要决策和从错误中学到的经验，分别记录到`workdocs/`目录下的文档`decision.md`和`lessons.md`中。我们定期回顾和总结这些内容，检查是否可以形成的知识文档。
+- 优化开发体验：虽然AI是主力开发，但人类开发则仍然需要投入到项目开发的全周期中，从需求的发起、AI的交流、得到的反馈、到功能的验收、整体进度的推进等，开发人员需要思考如何利用知识文档，和AI保持思想层面的一致性、帮助AI规避常见问题、提高代码一致性等
+
+总体而言，我们希望随着项目的深入，知识文档的深度和准度都可以得到积累，让AI能够在后续工作中输出质量更高且更符合设计需求的成果物。人类开发者需要在过程中，感知知识路由是否有效，并有意识的进行调整，使AI用起来更加顺手。
+  
 ### 4.2 能力路由的协同
 
 - 相关文档/文件：实际开发是动态变化的过程，为了将动态变化同步到能力路由体系中，模块实例维护了以下文档（通常由AI执行）
@@ -392,6 +421,9 @@ SSOT
 
 ### 4.3 其他设施的协同
 
-- 策略协同： AGENTS.md文档中定义的规范和执行策略遵循向上覆盖的原则
-- 触发器协同：
+**策略协同**： AGENTS.md文档中定义的规范和执行策略遵循向上覆盖的原则
+- 就地维护模块实例自身的需求或仅和实例有关联的说明/规则，可以直接在对应层级的`AGENTS.md`中写明，例如：整个实例都需要遵循的，写到实例根目录下的AGENTS.md，前端开发的策略和规范，写入实例前端目录下的策略文档。
+**触发器协同**：由于触发器的作用对象是知识文档、封装后流程、路由信息等，其作用机制和模块化的开发方式没有显性冲突
+
+
 
