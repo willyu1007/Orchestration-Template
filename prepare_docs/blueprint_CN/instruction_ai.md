@@ -1,4 +1,53 @@
-## 5. 运行策略
+# 运行策略
+
+
+
+
+面向代码大模型的策略入口，限定可执行范围、守护机制与提交要求，确保每次能力调用都按规执行。
+
+- **职责边界**
+  - `AGENTS.md` 只描述策略、权限与执行守则，不重复 `ROUTING.md` 的路径信息，也不列举完整能力（那是 `CAPABILITIES.md` 的职责）。
+  - 文档必须使用 front matter：`audience: ai`、`doc_kind: agent_policy`、`role`、`graph_node_id`、`ownership`、`updated_at`、`related_routes`（可选），方便模型快速识别。
+  - 对于通过 `agent-graph.yaml` 注册的每个节点，`AGENTS.md` 都是其安全/治理说明书；智能体加载顺序为：`ROUTING` → `AGENTS` → `CAPABILITIES` → 叶子文档/工具。
+
+- **必含内容**
+  - **Access Control**：列出允许/禁止/需审批的操作、访问级别、敏感目录/命令、环境限制（如"禁止直连生产 DB"）。
+  - **Execution Guardrails**：描述必须运行的 lint/test、所需的 doc / workdoc 更新、fallback 策略、dry-run/审批要求。
+  - **Tools & Dependencies**：标注可调用的脚本/服务、对应 registry 条目、输入输出 schema、必须通过的封装命令。
+  - **Escalation & Logging**：指定触发 guardrail 的事件、提交审批的联系人、`handoff-history.md` / workdoc 应填的字段。
+  - **Related Routes & Capabilities**：引用本目录 `ROUTING.md` 中的 scope/topic/when，以及 `CAPABILITIES.md` 中能力条目的 ID，帮助模型在守则与能力之间建立映射。
+
+- **维护方式**
+  - 变更流程：registry / agent-graph → `ROUTING.md` → `AGENTS.md` → `CAPABILITIES.md` → workdoc/ledger；任何策略改动都需更新 `doc_agent/orchestration/doc-node-map.yaml`。
+  - `AGENTS.md` 行数控制在 200 行内，使用表格/要点而非长段落，便于模型快速解析。
+  - 建议在文档末尾附 "Agent Policy Checklist"，列出提交前需要确认的步骤（lint、tests、doc update、approvals），供模型或人工复核。
+  - 若一个目录没有执行权限，仅提供文档，允许省略 `AGENTS.md`；若共享同一守则，可在上一级 `AGENTS.md` 中定义公共策略，并在子目录通过 `related_routes` 指向它。
+
+
+## 1. 基本规则
+
+
+### 命名规范
+
+### 文档规范
+
+
+
+## 2. 策略加载流程
+
+## 3. 维护
+
+
+
+## 根目录AGENTS.md
+
+   - 根目录下的AGENTS.md的职责包括:
+        - 定义全局边界，例如允许/不允许、审批点、危险操作流程、提交前置要求等。
+        - 给出AI必读清单，给出项目级操作的AI选读清单（需要明确什么时候阅读）
+        - 指明两套路由的入口位置（知识路由 ROUTING.md、功能体路由 ABILITY.md）。
+        - 约定工作文档（workdocs）的最小写作与恢复规则。
+        - 说明触发器/审批的基本原则与优先级。
+
 
 标准化文档格式、命名约定、目录结构，并确保文档针对 AI 消费进行了优化
 

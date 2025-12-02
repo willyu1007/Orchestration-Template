@@ -531,65 +531,45 @@ AI是否可以完成测试工作，取决于AI是否可以正确识别测试需�
 
 此外，由于集成或联调的最终验收是由人类开发者完成的，项目在开发过程中会累积测试或可视化工具，这些工具并不会参与到AI的工作流程中，所以可以按照面向人类阅读和使用的方式进行维护。
 
-
-
-
-
-这些文档可以保存在`modules/docs/guide`目录下: 
-
 #### 模块根目录骨架结构
 
 基于上述信息，一个典型的模块根级目录的骨架结构如下：
 
 ```
 modules/
-├── AGENTS.md              # 根级策略文档
-├── ROUNTING.md            # 文档路由
-├── overview/               # This file
-│   ├── AGENTS.md
-│   ├── type_registry.yaml        # 模块类型
-│   ├── instance_registry.yaml    # 模块实例
-│   ├── instance_maturity.yaml    # 模块实例完成度
-│   └── scripts/           # 开发过程中新增的脚本
-├── intergration/          # This file
-│   ├── AGENTS.md          # 联调策略文档
-│   ├── ROUNTING.md        # 联调相关的知识路由
-│   ├── ABILITY.md         # 联调相关的能力路由
-│   ├── scenarios.yaml     # 情景说明
-│   ├── workdocs/           # 当前进行的测试工作
+├── AGENTS.md             # 根级策略文档
+├── ROUNTING.md           # 顶层知识路由
+├── routes/               # 具体知识路由
+├── overview/             # 信息维护
+│   ├── AGENTS.md         # 策略文档
+│   ├── README.md         # 面向人类开发者
+│   ├── type_registry.yaml       # 模块类型
+│   ├── instance_registry.yaml   # 模块实例
+│   ├── instance_maturity.yaml   # 模块实例完成度
+│   ├── interfaces.yaml          # 接口信息
+│   └── api_gateway.yaml         # 网关信息
+├── intergration/         # 联调/集成
+│   ├── AGENTS.md               # 联调策略文档
+│   ├── ROUNTING.md             # 联调相关的知识路由
+│   ├── ABILITY.md              # 联调相关的能力路由
+│   ├── scenarios.yaml          # 情景说明
+│   ├── workdocs/               # 当前进行的测试工作
 │   │   ├── task-1/                 # 具体测试任务 - 和情景相对应
 │   │   │   ├── task-1-plan.md      # 完成任务的计划
 │   │   │   ├── task-1-context.md   # 记录工作上下文
 │   │   │   └── task-1-task.md      # 任务完成情况和进度   
 │   │   └── ...
-│   └── outcomes/          # 测试的相关产出
-├── config/                # 全局辈子
-│   ├── ...
-└──  模式实例目录/
+│   ├── outcomes/         # 相关产出
+│   │   ├── report/             # 具体测试任务 - 和情景相对应
+│   │   └── ...
+│   └── tools/            # 工具（例如可视化等）
+├── config/               # 全局配置（可以补充）
+│   ├── api_gateway/            # 网关配置
+│   ├── parameters/             # 全局参数
+│   ├── prompts/                # 提示词模版、意图识别规则（按场景分类）
+└── 模式实例目录/          # 模块实例的具体实现
 
-modules/docs/guide
-  ├── integrate.md        # 集成目录
-  ├── llm/                # 大模型 API、prompt bucket、温度/超参等接口参数
-  ├── telemetry/          # 日志、metrics、alerts
-  ├── parameters/         # 全局参数
-  ├── prompts/            # 提示词模版、意图识别规则（按场景分类）
-  ├── feature_flags/      # 开关、回滚策略
 ```
-
-
-
-**信息整合**
-
-此外，modules根目录还可以维护目录
-
-
-
-
-
-
-
-**MANIFEST.yaml**
-
 
 ---
 
