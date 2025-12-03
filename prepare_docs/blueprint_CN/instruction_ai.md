@@ -29,9 +29,18 @@
 
 ### 命名规范
 
+    - low tier的命名方式使用 `base.<domain>.<action>`, 参考格式：
+   
+    - high tier的命名方方式： `able.<domain>.<intent>`, 参考格式：
+
 ### 文档规范
 
 
+### PR规范
+
+### PR 检查规范
+
+### 测试规范
 
 ## 2. 策略加载流程
 
