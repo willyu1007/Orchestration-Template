@@ -23,10 +23,31 @@
 
 ### 1.1 必读内容
 
-- **Access Control**：列出允许/禁止/需审批的操作、访问级别、敏感目录/命令、环境限制（如"禁止直连生产 DB"）。
-  - **Execution Guardrails**：描述必须运行的 lint/test、所需的 doc / workdoc 更新、fallback 策略、dry-run/审批要求。
-  - **Tools & Dependencies**：标注可调用的脚本/服务、对应 registry 条目、输入输出 schema、必须通过的封装命令。
-  - **Escalation & Logging**：指定触发 guardrail 的事件、提交审批的联系人、`handoff-history.md` / workdoc 应填的字段。
+1. **Execution – Project Development（执行-项目开发）**
+   - Project Initialization（项目初始化）
+   - Module Development（模块开发）
+   - Workflow & Prompts（工作流与提示）
+   - Testing & Quality（测试与质量）
+   - AI Deployment（AI部署）
+
+2. **Governance – Policies & Maintenance（治理-策略与维护）**
+   - Agent Orchestration Rules（代理编排规则）
+   - Guardrail & Triggers（护栏与触发器）
+   - API & Contract Management（API与契约管理）
+   - Database Change Control（数据库变更控制）
+   - Configuration Management（配置管理）
+
+3. **Systems – Assets & Automation（系统-资产与自动化）**
+   - Data Flow & Performance（数据流与性能）
+   - Context & Knowledge Base（上下文与知识库）
+   - Scripts & Automation Tools（脚本与自动化工具）
+   - Documentation Standards（文档标准）
+
+### 子路由：
+- **Modules/ROUTING.md**：枚举模块类型和实例
+- **Config/ROUTING.md**：配置目录的路由
+- 其他子路由根据需要添加
+
 
 
 
@@ -39,6 +60,7 @@
 典型的选读内容包括：
 - 测试规范：
 - 提交规范：提交PR时候需要遵循的格式、必填内容等
+- 审核贵发：对提交的PR进行审核的规范
 - 命名规范：创建文件或目录时的命名规则
 - 文档规范：需要修改文档时候需要遵守的规则，格式要求，风格约束等
 - 脚本规范：创建会修改脚本需要遵守的规则
@@ -91,32 +113,6 @@
 
 
 
-
-
-
-
-
-## 1. 基本规则
-
-
-### 命名规范
-
-    - low tier的命名方式使用 `base.<domain>.<action>`, 参考格式：
-   
-    - high tier的命名方方式： `able.<domain>.<intent>`, 参考格式：
-
-### 文档规范
-
-
-### PR规范
-
-### PR 检查规范
-
-### 测试规范
-
-## 2. 策略加载流程
-
-## 3. 维护
 
 
 
