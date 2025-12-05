@@ -28,10 +28,10 @@ In short: hooks offer **deterministic, event-driven instrumentation and automati
 
 - **Event**  
   A discrete signal from the orchestration system or environment. Examples:
-  - `UserPromptSubmit` – a user message or prompt is submitted.
+  - `PromptSubmit` – a user message or prompt is submitted.
   - `PreAbilityCall` – the execution script is about to call an ability.
   - `PostAbilityCall` – the execution script has finished calling an ability.
-  - `SessionStop` – a session is being stopped (e.g., user presses “Stop”).
+  - `SessionStart` / `SessionEnd` / `SessionStop` – a session starts, ends, or is stopped.
 - **Hook**  
   A configuration object that binds one or more events to a handler. It describes:
   - Which `event_type` it listens to.
@@ -55,16 +55,14 @@ The orchestrator produces events; the hook registry says which handlers to invok
 
 The hook system is intentionally small and focused. A typical baseline includes:
 
-- `UserPromptSubmit`  
+- `PromptSubmit`  
   Triggered when a user submits a natural-language request. Used for:
-  - Skill / ability auto-activation.
-  - Early knowledge routing hints.
+  - Early knowledge / ability routing hints.
   - Lightweight logging of high-level intent.
 
 - `PreAbilityCall`  
   Triggered right before the execution script calls an ability. Used for:
   - Precondition checks (environment, inputs).
-  - Optional “are you sure?” confirmations for sensitive actions.
   - Tagging upcoming calls for logging.
 
 - `PostAbilityCall`  
@@ -79,7 +77,7 @@ The hook system is intentionally small and focused. A typical baseline includes:
   - Summarizing what was done in the session.
   - Optionally kicking off heavier CI flows (tests, type checks) without tying them to ability routing.
 
-These event types are enough to support the typical patterns found in the reference hooks: prompt-based skill activation, post-tool tracking, and stop-time validation.
+These event types are enough to support the typical patterns of using hooks system: prompt-based router suggestion, post-tool tracking, and stop-time validation.
 
 ### 1.3 Lifecycle
 
@@ -168,7 +166,7 @@ Example (conceptual) JSON output:
 
 ```json
 {
-  "UserPromptSubmit": [
+  "PromptSubmit": [
     {
       "id": "skill_activation_prompt",
       "handler": {
@@ -246,7 +244,7 @@ If the handler fails, the orchestrator should treat it as **non-fatal** by defau
 
 This section shows how the key hook types map to concrete use cases, including triggers, inputs, and outputs.
 
-### 3.1 `UserPromptSubmit`: skill activation prompt
+### 3.1 `PromptSubmit`: skill activation prompt
 
 **Use case:** Automatically propose relevant abilities when the user writes a natural-language request.
 
@@ -255,12 +253,11 @@ Example definition:
 ```yaml
 # .system/hooks/skill_activation_prompt.yaml
 id: skill_activation_prompt
-event_type: UserPromptSubmit
+event_type: PromptSubmit
 enabled: true
 
 summary: >
-  Read the incoming user message, cross-check it against the ability
-  pool, and suggest a small set of abilities that are likely useful.
+  Read the incoming user message, cross-check it against the ability pool, and suggest a small set of abilities that are likely useful.
 
 handler:
   kind: script
@@ -275,7 +272,7 @@ Example event context:
 
 ```json
 {
-  "event_type": "UserPromptSubmit",
+  "event_type": "PromptSubmit",
   "session_id": "sess-789",
   "user_message": "I need to run the full billing regression tests",
   "files_touched": [],
@@ -449,8 +446,8 @@ interface HookContextBase {
   stage?: "understand" | "plan" | "act" | "review";
 }
 
-interface UserPromptSubmitContext extends HookContextBase {
-  event_type: "UserPromptSubmit";
+interface PromptSubmitContext extends HookContextBase {
+  event_type: "PromptSubmit";
   user_message: string;
   files_touched?: string[];
 }
@@ -568,7 +565,7 @@ if __name__ == "__main__":
 
 Handler logic (conceptual):
 
-1. Read `UserPromptSubmitContext`.
+1. Read `PromptSubmitContext`.
 2. Load `ABILITY.md` and ability registries for the current scope.
 3. Use a code model to semantically match the prompt against ability descriptions.
 4. Return `suggested_abilities` with reasons.
@@ -594,7 +591,7 @@ This mirrors the “skill activation” hook pattern from the reference while ke
 
 #### 4.3.3 Knowledge-trigger handler
 
-For `UserPromptSubmit` or `SessionStop` events, a handler can emit a `new_intent` that aligns with the structured intent schema used by knowledge routing:
+For `PromptSubmit` or `SessionStop` events, a handler can emit a `new_intent` that aligns with the structured intent schema used by knowledge routing:
 
 ```json
 {
@@ -647,7 +644,7 @@ These checks are implemented via hooks and **do not require any special fields i
 Scenario: A developer types, “Run the full billing regression tests for me.”
 
 1. **Event emission**
-   - The orchestrator emits a `UserPromptSubmit` event with the user message.
+   - The orchestrator emits a `PromptSubmit` event with the user message.
 
 2. **Hook execution**
    - `skill_activation_prompt` receives the context.
@@ -685,10 +682,10 @@ Scenario: A developer keeps asking about pre-commit checks and running `make dev
 
 1. **Event emission**
    - The developer types: “Before I commit, what checks should I run?”
-   - `UserPromptSubmit` event is emitted with `user_message` and possibly the last CLI command.
+   - `PromptSubmit` event is emitted with `user_message` and possibly the last CLI command.
 
 2. **Hook execution**
-   - A `UserPromptSubmit` hook emits a `new_intent`:
+   - A `PromptSubmit` hook emits a `new_intent`:
 
      ```json
      {
