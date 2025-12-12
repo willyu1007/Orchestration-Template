@@ -118,6 +118,9 @@ Runtime behavior must respect these contracts:
   - Hooks may run in the background or synchronously from the runtime’s point of view.
   - Their outputs must **not** be fed back into the AI’s current planning loop.
 
+PostAbilityCall is scoped strictly to ability/tool invocations. It may observe and log the tool's stdout/result as part of the infra context, but it is not used to inspect or modify the primary AI developer's own responses. 
+If you need to evaluate the AI's final replies, consider a separate infra-only event such as `ModelOutput`.
+
 ---
 
 ## 2. Hook Declaration (YAML schema)
@@ -282,6 +285,14 @@ interface PostAbilityCallContext {
   error_message?: string;
 }
 ```
+
+In many repos, abilities are implemented as local CLI tools or scripts. The runtime is allowed to capture the tool's stdout/stderr and either:
+
+- embed a truncated excerpt into `output_summary`, or
+- store the full stdout in a log file and expose a pointer (e.g. in an
+  implementation-specific field such as `stdout_log_path`).
+
+PostAbilityCall hooks may inspect these values to compute telemetry and quality metrics (for example, detecting frequent error-like outputs or empty results), but this remains an infra-only concern. Any conclusions based on stdout should be written to logs or caches, not fed back into the current AI planning loop.
 
 Hooks here are **infra‑only**: they log, track usage, and update caches. They do **not** send AI‑facing signals for the current turn.
 
@@ -642,6 +653,7 @@ effects:
 The handler:
 
 - Reads the context (`ability_id`, `status`, `duration_ms`, etc.).
+- Optionally inspects a truncated view or log pointer for the tool's stdout (via `output_summary` or a repo-specific field) to derive basic quality metrics.
 - Appends a telemetry row to a log or updates a small JSON cache.
 - Returns a `HookResult` with only infra‑relevant fields (e.g. `usage_recorded: true`).
 
